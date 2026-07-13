@@ -325,7 +325,7 @@ function seed(){
   const log=[
     {dateISO:iso(addDays(now,-2)),trainer:'Ahmet H.',kind:'done',delta:-1},
     {dateISO:iso(addDays(now,-6)),trainer:'Ceren H.',kind:'done',delta:-1},
-    {dateISO:iso(addDays(now,-9)),trainer:'Ahmet H.',kind:'refund',delta:0},
+    {dateISO:iso(addDays(now,-9)),trainer:'Ahmet H.',kind:'refund',delta:1},
     {dateISO:iso(addDays(now,-11)),trainer:'Ceren H.',kind:'burn',delta:-1},
   ];
   const notifs=[
@@ -335,7 +335,7 @@ function seed(){
   return {v:5, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
-    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false,
+    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null,
     roster, requests, availability, log, notifs, mondayISO:iso(monday)};
 }
 let S;
@@ -366,8 +366,7 @@ function book(){
 }
 function approve(id){ const r=S.requests.find(x=>x.id===id); if(!r)return; r.status='approved'; const s=member(r.studentId);
   s.pkg.used=Math.min(s.pkg.lessons,s.pkg.used+1);
-  if(s.id===S.meId){ S.log.unshift({dateISO:r.dateISO,trainer:firstName(r.trainerId)+' H.',kind:'done',delta:-1});
-    S.notifs.unshift({icon:'check',t:'Dersin onaylandı',d:`${trainer(r.trainerId).name} · ${hh(r.hour)}`,when:'şimdi'}); }
+  if(s.id===S.meId) S.notifs.unshift({icon:'check',t:'Dersin onaylandı',d:`${trainer(r.trainerId).name} · ${hh(r.hour)}`,when:'şimdi'});
   save(); render(); toast('Onaylandı · kotadan düşüldü'); }
 function reject(id){ const r=S.requests.find(x=>x.id===id); if(!r)return; r.status='rejected';
   if(r.studentId===S.meId) S.notifs.unshift({icon:'x',t:'Talebin reddedildi',d:`${trainer(r.trainerId).name} · dilim tekrar açıldı`,when:'şimdi'});
@@ -417,7 +416,6 @@ function addStudentToSlot(id){ const T=curTrainer(); const sel=trWeek()[S.dayOff
   const hr=S.addSlot.hour;
   S.requests.push({id:'r'+Date.now(),trainerId:T,studentId:id,studentName:s.name,initials:s.initials,dateISO:iso(sel),hour:hr,status:'approved'});
   s.pkg.used++;
-  if(id===S.meId) S.log.unshift({dateISO:iso(sel),trainer:firstName(T)+' H.',kind:'done',delta:-1});
   S.notifs.unshift({icon:'calendar',t:'Derse eklendin',d:`${trainer(T).name} · ${DOW[sel.getDay()]} ${hh(hr)}`,when:'şimdi'});
   S.addSlot=null; save(); render(); toast(`${s.name.split(' ')[0]} · ${hh(hr)} eklendi · kotadan düşüldü`); }
 function addListHTML(){ const q=(S.addSearch||'').toLocaleLowerCase('tr');
@@ -460,6 +458,7 @@ function render(){
   h+=`<div class="content fadein">`+(S.role==='student'?renderStudent():S.role==='trainer'?renderTrainer():renderAdmin())+`</div>`;
   h+=renderTabs();
   h+=addSheet();
+  h+=lessonSheet();
   $('app').innerHTML=h;
 }
 
@@ -467,13 +466,14 @@ function render(){
 function renderStudent(){
   const sc=S.screen.student, p=me().pkg;
   if(sc==='book') return renderBook();
+  if(sc==='reschedule') return renderReschedule();
   if(sc==='package'){
     return `<div class="appbar"><div><button class="backbtn" onclick="go('home')">${ic('chevronL',18)} Paket</button><div class="h1" style="margin-top:8px">${p.lessons} Ders · ${p.months} Ay</div><div class="subline mono">${fmtShort(p.startISO)} – ${fmtShort(p.endISO)}</div></div></div>
     <div class="stat2"><div class="stat"><div class="n" style="color:var(--accent)">${p.lessons-p.used}</div><div class="l">Kalan hak</div></div>
       <div class="stat"><div class="n">${daysLeft(p.endISO)}<span class="u"> gün</span></div><div class="l">Süre kaldı</div></div></div>
     <div class="sect">Kullanım dökümü</div>
     ${S.log.map(l=>{ const m={done:['ok','check','Ders yapıldı'],refund:['','refresh','İptal · zamanında iade'],burn:['stop','x','İptal · aynı gün']}[l.kind];
-      const pv=l.delta<0?`<span class="tag stop">${l.delta}</span>`:`<span class="tag ok">+0</span>`;
+      const pv=l.delta<0?`<span class="tag stop">${l.delta}</span>`:l.delta>0?`<span class="tag ok">+${l.delta}</span>`:`<span class="tag mut">+0</span>`;
       return `<div class="row"><div class="ic ${m[0]}">${ic(m[1],18)}</div><div class="grow"><div class="t">${m[2]}</div><div class="d mono">${fmtShort(l.dateISO)} · ${l.trainer}</div></div>${pv}</div>`; }).join('')}`;
   }
   if(sc==='notifs') return notifScreen(me().initials);
@@ -493,7 +493,9 @@ function renderStudent(){
   <button class="btn" onclick="go('book')">${ic('plus',18)} Ders Al</button>
   <button class="btn ghost sm" onclick="go('package')">Paket detayını gör</button>`;
 }
-function lessonRow(r,cls,label){ return `<div class="row"><div class="ic ${cls==='wait'?'wait':'acc'}">${ic('dumbbell',18)}</div><div class="grow"><div class="t">${firstName(r.trainerId)} Hoca</div><div class="d mono">${fmtShort(r.dateISO)} · ${hh(r.hour)}${cls==='wait'?' · kilitli':''}</div></div><span class="tag ${cls}">${label}</span></div>`; }
+function lessonRow(r,cls,label){ const tap=r.status==='approved';
+  const badge=r.pending2?`<span class="tag wait">${r.pending2.type==='cancel'?'İptal?':'Taşı?'}</span>`:`<span class="tag ${cls}">${label}</span>`;
+  return `<div class="row" ${tap?`style="cursor:pointer" onclick="openLesson('${r.id}')"`:''}><div class="ic ${cls==='wait'?'wait':'acc'}">${ic('dumbbell',18)}</div><div class="grow"><div class="t">${firstName(r.trainerId)} Hoca</div><div class="d mono">${fmtShort(r.dateISO)} · ${hh(r.hour)}${cls==='wait'?' · kilitli':''}</div></div>${badge}${tap?`<span style="color:var(--ink-3);display:flex">${ic('chevronR',16)}</span>`:''}</div>`; }
 
 function renderBook(){
   const week=bookWeek(); const sel=week[S.bookDayOffset]; const trs=me().trainers; if(!trs.includes(S.bookTrainer))S.bookTrainer=trs[0];
@@ -512,6 +514,47 @@ function renderBook(){
   <button class="btn" onclick="book()" ${S.bookHour==null?'disabled':''}>${ic('check',18)} Ders Talebi Gönder</button>`;
 }
 
+/* öğrenci: dersi taşı / iptal et (hoca onayıyla) */
+function openLesson(rid){ S.lessonSheet=rid; save(); render(); }
+function closeLesson(){ S.lessonSheet=null; save(); render(); }
+function reqCancel(rid){ const r=S.requests.find(x=>x.id===rid); if(!r)return; r.pending2={type:'cancel'}; S.lessonSheet=null; save(); render();
+  const sd=r.dateISO===iso(new Date()); toast('İptal talebi gönderildi'+(sd?' · aynı gün: hak yanabilir':' · onayda hak iade')); }
+function withdrawChange(rid){ const r=S.requests.find(x=>x.id===rid); if(!r)return; r.pending2=null; S.lessonSheet=null; save(); render(); toast('Talep geri alındı'); }
+function startMove(rid){ const r=S.requests.find(x=>x.id===rid); if(!r)return; S.moveLessonId=rid; S.bookTrainer=r.trainerId; S.bookHour=null; S.bookWeek=0; S.bookDayOffset=S.dayOffset; S.lessonSheet=null; S.screen.student='reschedule'; save(); render(); }
+function cancelMove(){ S.moveLessonId=null; S.bookHour=null; S.screen.student='home'; save(); render(); }
+function confirmMove(){ const r=S.requests.find(x=>x.id===S.moveLessonId); if(!r||S.bookHour==null)return;
+  const sel=bookWeek()[S.bookDayOffset]; r.pending2={type:'move',dateISO:iso(sel),hour:S.bookHour};
+  S.moveLessonId=null; S.bookHour=null; S.screen.student='home'; save(); render(); toast('Taşıma talebi gönderildi · hoca onayına düştü'); }
+function renderReschedule(){
+  const r=S.requests.find(x=>x.id===S.moveLessonId); if(!r){ S.screen.student='home'; return renderStudent(); }
+  const T=r.trainerId; const week=bookWeek(); const sel=week[S.bookDayOffset];
+  const open=availHours(T,sel.getDay()); const free=freeHours(T,sel);
+  return `<div class="appbar"><div><button class="backbtn" onclick="cancelMove()">${ic('chevronL',18)} Geri</button><div class="h1" style="margin-top:8px">Dersi Taşı</div><div class="subline mono">${firstName(T)} Hoca · şu an ${DOW[new Date(r.dateISO).getDay()]} ${hh(r.hour)}</div></div></div>
+  <div class="sect">Hafta</div>
+  ${weekNav(week,'bookWeekShift(-1)','bookWeekShift(1)',S.bookWeek===0)}
+  <div class="days">${week.map((d,i)=>{ const has=availHours(T,d.getDay()).length>0; return `<div class="day ${i===S.bookDayOffset?'on':''} ${has?'':'off'}" onclick="setBookDay(${i})">${DOW[d.getDay()]}<span class="n">${d.getDate()}</span></div>`; }).join('')}</div>
+  <div class="sect">Yeni saat · ${fmtDay(sel)}</div>
+  ${open.length?`<div class="slots">${open.map(hr=>{ const isFree=free.includes(hr); const cur=iso(sel)===r.dateISO&&hr===r.hour; const on=S.bookHour===hr&&isFree;
+     return `<div class="slot ${on?'sel':(isFree&&!cur)?'free':'busy'}" ${isFree&&!cur?`onclick="setBookHour(${hr})"`:''}>${hh(hr)}</div>`; }).join('')}</div>`:`<div class="empty">Hoca bu gün kapalı — başka gün seç</div>`}
+  <button class="btn" onclick="confirmMove()" ${S.bookHour==null?'disabled':''}>${ic('refresh',18)} Taşıma Talebi Gönder</button>`;
+}
+function lessonSheet(){ if(!S.lessonSheet) return ''; const r=S.requests.find(x=>x.id===S.lessonSheet); if(!r) return '';
+  const sd=r.dateISO===iso(new Date());
+  const info=`${firstName(r.trainerId)} Hoca · ${DOW[new Date(r.dateISO).getDay()]} ${fmtShort(r.dateISO)} · ${hh(r.hour)}`;
+  let body;
+  if(r.pending2){ const label=r.pending2.type==='cancel'?'İptal talebin onay bekliyor':`Taşıma talebin onay bekliyor → ${DOW[new Date(r.pending2.dateISO).getDay()]} ${hh(r.pending2.hour)}`;
+    body=`<div class="row" style="background:var(--surface-2)"><div class="ic wait">${ic('clock',18)}</div><div class="grow"><div class="t">${label}</div><div class="d">Hoca onayı bekleniyor</div></div></div>
+      <button class="btn ghost" onclick="withdrawChange('${r.id}')">Talebi geri al</button>`;
+  } else {
+    body=`<button class="btn ghost" onclick="startMove('${r.id}')">${ic('refresh',18)} Dersi taşı (başka saate)</button>
+      <div class="row" style="background:var(--surface-2);border-style:dashed"><div class="ic ${sd?'stop':'ok'}">${ic(sd?'x':'check',18)}</div><div class="grow"><div class="t">${sd?'Bugünkü ders — iptalde hak yanar':'İptalde hakkın iade edilir'}</div><div class="d">İptal hoca onayına düşer</div></div></div>
+      <button class="btn" style="background:var(--stop)" onclick="reqCancel('${r.id}')">${ic('trash',18)} Dersi iptal et</button>`;
+  }
+  return `<div class="sheet-bg" onclick="if(event.target===this)closeLesson()"><div class="sheet">
+    <div class="sheet-h"><div><div class="eyebrow">Ders</div><div class="h1" style="font-size:18px">${info}</div></div><button class="sheet-x" onclick="closeLesson()">${ic('x',18)}</button></div>
+    <div style="padding:0 16px 8px; display:flex; flex-direction:column; gap:10px">${body}</div></div></div>`;
+}
+
 /* ===== HOCA (ve yönetici tüm hocalar için) ===== */
 function curTrainer(){ return S.role==='admin' ? (S.adminTrainer||'t1') : 't1'; }
 function renderTrainer(){
@@ -525,7 +568,33 @@ function renderTrainer(){
 }
 function pendCard(r){ return `<div class="card" style="padding:14px"><div class="row" style="background:none;border:none;padding:0 0 12px"><div class="mono-av wait">${r.initials}</div><div class="grow"><div class="t">${r.studentName}</div><div class="d mono">${DOW[new Date(r.dateISO).getDay()]} ${fmtShort(r.dateISO)} · ${hh(r.hour)}</div></div></div><div class="btnrow"><button class="b-ok" onclick="approve('${r.id}')">${ic('check',16)} Onayla</button><button class="b-no" onclick="reject('${r.id}')">${ic('x',16)} Reddet</button></div></div>`; }
 
-function pendBlock(){ const pend=pendingFor(curTrainer()); return pend.length?`<div class="sect">Onay bekleyen · ${pend.length}</div>`+pend.map(pendCard).join(''):''; }
+function changeReqs(T){ return S.requests.filter(r=>r.trainerId===T && r.status==='approved' && r.pending2); }
+function changeCard(r){ const sd=r.dateISO===iso(new Date()); const c=r.pending2;
+  if(c.type==='cancel'){
+    return `<div class="card" style="padding:14px"><div class="row" style="background:none;border:none;padding:0 0 6px"><div class="mono-av stop">${r.initials}</div><div class="grow"><div class="t">${r.studentName} · iptal istiyor</div><div class="d mono">${DOW[new Date(r.dateISO).getDay()]} ${fmtShort(r.dateISO)} · ${hh(r.hour)}</div></div></div>
+      <div class="d" style="margin:0 2px 10px; color:${sd?'var(--stop)':'var(--ok)'}">${sd?'Aynı gün — onayında öğrencinin hakkı yanar':'Onayında hak iade edilir'}</div>
+      <div class="btnrow"><button class="b-ok" onclick="approveChange('${r.id}')">${ic('check',16)} İptali onayla</button><button class="b-no" onclick="rejectChange('${r.id}')">${ic('x',16)} Reddet</button></div></div>`; }
+  return `<div class="card" style="padding:14px"><div class="row" style="background:none;border:none;padding:0 0 6px"><div class="mono-av wait">${r.initials}</div><div class="grow"><div class="t">${r.studentName} · taşımak istiyor</div><div class="d mono">${DOW[new Date(r.dateISO).getDay()]} ${hh(r.hour)} → ${DOW[new Date(c.dateISO).getDay()]} ${fmtShort(c.dateISO)} ${hh(c.hour)}</div></div></div>
+    <div class="btnrow"><button class="b-ok" onclick="approveChange('${r.id}')">${ic('check',16)} Taşımayı onayla</button><button class="b-no" onclick="rejectChange('${r.id}')">${ic('x',16)} Reddet</button></div></div>`; }
+function approveChange(rid){ const r=S.requests.find(x=>x.id===rid); if(!r||!r.pending2)return; const c=r.pending2; const s=member(r.studentId);
+  if(c.type==='cancel'){ const sd=r.dateISO===iso(new Date());
+    if(!sd && s) s.pkg.used=Math.max(0,s.pkg.used-1);
+    if(s && s.id===S.meId) S.log.unshift({dateISO:r.dateISO,trainer:firstName(r.trainerId)+' H.',kind:sd?'burn':'refund',delta:sd?-1:1});
+    r.status='cancelled'; r.pending2=null;
+    S.notifs.unshift({icon:'x',t:'İptal onaylandı',d:`${firstName(r.trainerId)} Hoca · ${hh(r.hour)} · ${sd?'hak yandı':'hak iade'}`,when:'şimdi'});
+    save(); render(); toast(`İptal onaylandı · ${sd?'hak yandı':'hak iade edildi'}`); return; }
+  const taken=activeReqs(r.trainerId,c.dateISO).some(x=>x.id!==r.id&&x.hour===c.hour);
+  if(taken){ toast('Hedef saat dolu — taşınamadı'); return; }
+  r.dateISO=c.dateISO; r.hour=c.hour; r.pending2=null;
+  S.notifs.unshift({icon:'refresh',t:'Taşıma onaylandı',d:`${firstName(r.trainerId)} Hoca · ${DOW[new Date(r.dateISO).getDay()]} ${hh(r.hour)}`,when:'şimdi'});
+  save(); render(); toast('Taşıma onaylandı'); }
+function rejectChange(rid){ const r=S.requests.find(x=>x.id===rid); if(!r||!r.pending2)return; const t=r.pending2.type; r.pending2=null;
+  S.notifs.unshift({icon:'x',t:(t==='cancel'?'İptal reddedildi':'Taşıma reddedildi'),d:`${firstName(r.trainerId)} Hoca · ders duruyor`,when:'şimdi'});
+  save(); render(); toast(t==='cancel'?'İptal reddedildi':'Taşıma reddedildi'); }
+function pendBlock(){ const T=curTrainer(); const pend=pendingFor(T); const chg=changeReqs(T); let h='';
+  if(pend.length) h+=`<div class="sect">Onay bekleyen · ${pend.length}</div>`+pend.map(pendCard).join('');
+  if(chg.length) h+=`<div class="sect">Değişiklik talepleri · ${chg.length}</div>`+chg.map(changeCard).join('');
+  return h; }
 function agendaBody(){
   const T=curTrainer(); const isMonth=S.agendaView==='month';
   const toggle=`<div class="toggle"><button class="${!isMonth?'on':''}" onclick="setAgenda('day')">Gün</button><button class="${isMonth?'on':''}" onclick="setAgenda('month')">Ay</button></div>`;
@@ -653,7 +722,7 @@ function renderMemberDetail(id){
 
 /* ===== TABBAR ===== */
 function renderTabs(){
-  const pend=pendingFor('t1').length; const pendAll=S.requests.filter(r=>r.status==='pending').length;
+  const pend=pendingFor('t1').length+changeReqs('t1').length; const pendAll=S.requests.filter(r=>r.status==='pending'||(r.status==='approved'&&r.pending2)).length;
   const defs={ student:[['home','home','Ana'],['book','calendar','Ders Al'],['package','ticket','Paket'],['notifs','bell','Bildirim']],
     trainer:[['agenda','calendar','Takvim'],['avail','slider','Müsaitlik'],['students','users','Öğrenci'],['notifs','bell','Bildirim']],
     admin:[['reports','chart','Rapor'],['members','users','Üye'],['trainers','calendar','Hoca'],['panel','building','Panel']] }[S.role];
