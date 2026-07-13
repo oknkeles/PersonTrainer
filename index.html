@@ -331,7 +331,7 @@ function seed(){
   return {v:5, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
-    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3}, memberSearch:'', addSlot:null, addSearch:'',
+    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null,
     roster, requests, availability, log, notifs, mondayISO:iso(monday)};
 }
 let S;
@@ -391,14 +391,12 @@ function memberListHTML(){ const q=(S.memberSearch||'').toLocaleLowerCase('tr');
   const list=S.roster.filter(s=>s.name.toLocaleLowerCase('tr').includes(q));
   if(!list.length) return `<div class="empty">Eşleşen üye yok</div>`;
   return list.map(memberCard).join(''); }
-function memberCard(s){ const p=s.pkg; const e=pkgEnded(p);
-  return `<div class="card" style="padding:14px">
-    <div class="row" style="background:none;border:none;padding:0 0 10px"><div class="mono-av ${e?'stop':''}">${s.initials}</div>
-      <div class="grow"><div class="t">${s.name}</div><div class="d mono">${p.lessons} ders · ${p.used}/${p.lessons} · ${e?'kapandı':daysLeft(p.endISO)+' gün'}</div></div>
-      <span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span></div>
-    <div class="chips" style="margin-bottom:11px">${s.trainers.map(id=>`<span class="chip">${ic('user',13)} ${trainer(id).name.split(' ')[0]}</span>`).join('')}</div>
-    <div class="btnrow"><button class="btn ghost sm" onclick="extendMonths('${s.id}',1)">${ic('refresh',16)} +1 Ay</button><button class="btn ghost sm" onclick="addLessons('${s.id}',4)">${ic('plus',16)} +4 Ders</button></div>
-  </div>`; }
+function memberCard(s){ const p=s.pkg; const e=pkgEnded(p); const trs=s.trainers.map(id=>trainer(id).name.split(' ')[0]).join(', ');
+  return `<div class="row" style="cursor:pointer" onclick="openMember('${s.id}')"><div class="mono-av ${e?'stop':''}">${s.initials}</div>
+    <div class="grow"><div class="t">${s.name}</div><div class="d mono">${p.used}/${p.lessons} ders · ${e?'kapandı':daysLeft(p.endISO)+' gün'} · ${trs}</div></div>
+    <span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`; }
+function openMember(id){ S.adminMember=id; const m=member(id); S.def={memberId:id,trainers:[...m.trainers],lessons:m.pkg.lessons,months:m.pkg.months}; save(); render(); }
+function closeMember(){ S.adminMember=null; save(); render(); }
 
 /* hoca: boş saate öğrenci ekleme */
 function openAdd(h){ if(Date.now()-(window._dragJust||0)<400) return; S.addSlot={hour:h}; S.addSearch=''; save(); render(); }
@@ -425,7 +423,7 @@ function addSheet(){ if(!S.addSlot) return ''; const sel=trWeek()[S.dayOffset];
 
 /* nav */
 function setRole(r){ S.role=r; save(); render(); }
-function go(s){ S.screen[S.role]=s; save(); render(); }
+function go(s){ S.screen[S.role]=s; S.adminMember=null; save(); render(); }
 function trWeekShift(d){ S.trWeek+=d; save(); render(); }
 function bookWeekShift(d){ S.bookWeek=Math.max(0,S.bookWeek+d); S.bookHour=null; save(); render(); }
 function repMonthShift(d){ S.repMonth=Math.min(0,S.repMonth+d); save(); render(); }
@@ -471,7 +469,7 @@ function renderStudent(){
   if(sc==='notifs') return notifScreen(me().initials);
   const mine=S.requests.filter(r=>r.studentId===S.meId).sort((a,b)=>(a.dateISO+pad(a.hour))>(b.dateISO+pad(b.hour))?1:-1);
   const up=mine.filter(r=>r.status==='approved').slice(0,3), pend=mine.filter(r=>r.status==='pending');
-  return `<div class="appbar"><div><div class="eyebrow">New U Sport Center · Kadıköy</div><div class="h1">Merhaba, ${me().name.split(' ')[0]}</div></div><div class="avatar">${me().initials}</div></div>
+  return `<div class="appbar"><div><div class="eyebrow">New U Sport Center</div><div class="h1">Merhaba, ${me().name.split(' ')[0]}</div></div><div class="avatar">${me().initials}</div></div>
   <div class="hero"><div class="cap"><span>Aktif Paket</span><span class="mono">${daysLeft(p.endISO)} GÜN</span></div>
     <div class="num mono"><span class="accent">${p.lessons-p.used}</span><small> / ${p.lessons} ders kaldı</small></div>
     <div class="hline"><span style="width:${p.used/p.lessons*100}%"></span></div>
@@ -609,20 +607,28 @@ function renderReports(){
     ${hs.map(x=>`<div class="lgrow" style="margin-bottom:12px"><span class="sw" style="background:var(--accent)"></span><div class="grow"><div class="rowspace"><span>${hh(x[0])}</span><span class="mono">${x[1]} ders</span></div><div class="track"><span style="width:${x[1]/hmax*100}%;background:var(--accent)"></span></div></div></div>`).join('')}</div>`;
 }
 function renderMembers(){
-  const d=S.def;
-  return `<div class="appbar"><div><div class="eyebrow">Yönetim</div><div class="h1">Üyeler</div></div><div class="avatar">NU</div></div>
+  if(S.adminMember) return renderMemberDetail(S.adminMember);
+  return `<div class="appbar"><div><div class="eyebrow">Yönetim</div><div class="h1">Üyeler</div><div class="subline">${S.roster.length} üye · dokunup düzenle</div></div><div class="avatar">NU</div></div>
+  <div class="searchbar">${ic('search',18)}<input placeholder="İsimle ara…" value="${(S.memberSearch||'').replace(/"/g,'&quot;')}" oninput="filterMembers(this.value)"></div>
+  <div id="memberList" style="display:flex;flex-direction:column;gap:10px">${memberListHTML()}</div>`;
+}
+function renderMemberDetail(id){
+  const s=member(id); const p=s.pkg; const d=S.def; const e=pkgEnded(p);
+  return `<div class="appbar"><div><button class="backbtn" onclick="closeMember()">${ic('chevronL',18)} Üyeler</button><div class="h1" style="margin-top:8px">${s.name}</div></div><div class="mono-av ${e?'stop':''}" style="width:44px;height:44px;border-radius:13px;font-size:15px">${s.initials}</div></div>
+  <div class="stat2"><div class="stat"><div class="n" style="color:${e?'var(--stop)':'var(--accent)'}">${p.lessons-p.used}</div><div class="l">Kalan ders</div></div>
+    <div class="stat"><div class="n">${daysLeft(p.endISO)}<span class="u"> gün</span></div><div class="l">Süre kaldı</div></div></div>
+  <div class="row"><div class="ic">${ic('ticket',18)}</div><div class="grow"><div class="t mono">${p.lessons} ders · ${p.months} ay</div><div class="d">${fmtShort(p.startISO)} – ${fmtShort(p.endISO)} · ${p.used}/${p.lessons} kullanıldı</div></div><span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span></div>
+  <div class="chips">${s.trainers.map(tid=>`<span class="chip">${ic('user',13)} ${trainer(tid).name}</span>`).join('')}</div>
+  <div class="sect">Hızlı işlem</div>
+  <div class="btnrow"><button class="btn ghost sm" onclick="extendMonths('${id}',1)">${ic('refresh',16)} Süre +1 Ay</button><button class="btn ghost sm" onclick="addLessons('${id}',4)">${ic('plus',16)} +4 Ders</button></div>
+  <div class="sect">Yeni paket / hoca ata</div>
   <div class="card">
-    <div class="sect" style="margin:0 0 12px">Paket tanımla / güncelle</div>
-    <div class="field"><label>Öğrenci</label><select onchange="defPickMember(this.value)">${S.roster.map(s=>`<option value="${s.id}" ${s.id===d.memberId?'selected':''}>${s.name}</option>`).join('')}</select></div>
     <div class="field"><label>Hoca(lar) · çoklu seçilebilir</label><div class="checks">${TRAINERS.map(t=>`<div class="chk ${d.trainers.includes(t.id)?'on':''}" onclick="defToggleTrainer('${t.id}')">${t.name.split(' ')[0]}</div>`).join('')}</div></div>
     <div class="field"><label>Ders adedi</label><div class="quickrow" style="margin-bottom:9px">${[4,5,8,10,16].map(n=>`<div class="quick ${d.lessons==n?'on':''}" onclick="defQuick(${n})">${n}</div>`).join('')}</div>
       <input type="number" min="1" inputmode="numeric" value="${d.lessons}" oninput="S.def.lessons=this.value"><span class="hint">İstediğin sayıyı yaz — sabit değil</span></div>
-    <div class="field"><label>Süre (ay)</label><input type="number" min="1" inputmode="numeric" value="${d.months}" oninput="S.def.months=this.value"><span class="hint">Süre dolunca paket kapanır</span></div>
+    <div class="field"><label>Süre (ay)</label><input type="number" min="1" inputmode="numeric" value="${d.months}" oninput="S.def.months=this.value"><span class="hint">Yeni paket · kullanım sıfırlanır</span></div>
     <button class="btn" onclick="defineSubmit()">${ic('check',18)} Paketi Tanımla</button>
-  </div>
-  <div class="sect">Üye listesi · ${S.roster.length}</div>
-  <div class="searchbar">${ic('search',18)}<input placeholder="İsimle ara…" value="${(S.memberSearch||'').replace(/"/g,'&quot;')}" oninput="filterMembers(this.value)"></div>
-  <div id="memberList">${memberListHTML()}</div>`;
+  </div>`;
 }
 
 /* ===== TABBAR ===== */
