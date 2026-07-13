@@ -146,6 +146,16 @@
   .stat .l{ font-size:11.5px; color:var(--ink-2); margin-top:6px; font-weight:600; }
   .stat .tr{ font-size:11px; font-weight:700; margin-top:6px; font-family:var(--mono);} .up{color:var(--ok);} .down{color:var(--stop);}
 
+  /* aylık takvim */
+  .mgrid{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .mgrid .mh{ font-size:9.5px; font-weight:700; color:var(--ink-3); text-align:center; text-transform:uppercase; letter-spacing:.04em; padding-bottom:2px; }
+  .mcell{ aspect-ratio:1/1; border-radius:9px; border:1px solid var(--line); background:var(--surface); padding:5px 5px 4px; display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between; }
+  .mcell.out{ border:none; background:transparent; }
+  .mcell.today{ border-color:var(--ink); border-width:1.5px; }
+  .mcell .dnum{ font-size:11.5px; font-weight:700; font-family:var(--mono); color:var(--ink-2); }
+  .mcell.today .dnum{ color:var(--ink); }
+  .mcell .occ{ align-self:stretch; text-align:center; font-size:11px; font-weight:800; font-family:var(--mono); border-radius:5px; padding:1px 0; color:#fff; }
+
   .chart{ display:flex; align-items:flex-end; gap:9px; height:130px; padding:10px 2px 0; }
   .barcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; height:100%; justify-content:flex-end; }
   .barcol .stick{ width:100%; border-radius:5px 5px 0 0; background:var(--ink); }
@@ -256,7 +266,7 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v4';
+const KEY='pt_studio_v5';
 const TRAINERS=[{id:'t1',name:'Ahmet Yılmaz',initials:'AY'},{id:'t2',name:'Ceren Aksoy',initials:'CA'}];
 const trainer=id=>TRAINERS.find(t=>t.id===id);
 const firstName=id=>trainer(id).name.split(' ')[0];
@@ -318,14 +328,14 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:'Ahmet Hoca · Salı 10:00',when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:'Ceren Hoca · onay bekliyor',when:'dün'},
   ];
-  return {v:4, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
-    agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, availDay:1,
+  return {v:5, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+    agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
     def:{memberId:'s1',trainers:['t1'],lessons:12,months:3}, memberSearch:'', addSlot:null, addSearch:'',
     roster, requests, availability, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==4) S=seed(); }catch(e){ S=seed(); } }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==5) S=seed(); }catch(e){ S=seed(); } }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 function resetDemo(){ if(confirm('Demo verileri sıfırlansın mı?')){ S=seed(); save(); render(); toast('Sıfırlandı'); } }
 const me=()=>S.roster.find(r=>r.id===S.meId);
@@ -420,7 +430,8 @@ function trWeekShift(d){ S.trWeek+=d; save(); render(); }
 function bookWeekShift(d){ S.bookWeek=Math.max(0,S.bookWeek+d); S.bookHour=null; save(); render(); }
 function repMonthShift(d){ S.repMonth=Math.min(0,S.repMonth+d); save(); render(); }
 function setAgenda(v){ S.agendaView=v; save(); render(); }
-function setDay(i){ S.dayOffset=i; if(S.agendaView==='week') S.agendaView='day'; save(); render(); }
+function setDay(i){ S.dayOffset=i; if(S.agendaView==='month') S.agendaView='day'; save(); render(); }
+function avWeekShift(d){ S.avWeek+=d; save(); render(); }
 function setAvailDay(d){ S.availDay=d; save(); render(); }
 function setBookTrainer(id){ S.bookTrainer=id; S.bookHour=null; save(); render(); }
 function setBookDay(i){ S.bookDayOffset=i; S.bookHour=null; save(); render(); }
@@ -460,7 +471,7 @@ function renderStudent(){
   if(sc==='notifs') return notifScreen(me().initials);
   const mine=S.requests.filter(r=>r.studentId===S.meId).sort((a,b)=>(a.dateISO+pad(a.hour))>(b.dateISO+pad(b.hour))?1:-1);
   const up=mine.filter(r=>r.status==='approved').slice(0,3), pend=mine.filter(r=>r.status==='pending');
-  return `<div class="appbar"><div><div class="eyebrow">Grand Fitness · Kadıköy</div><div class="h1">Merhaba, ${me().name.split(' ')[0]}</div></div><div class="avatar">${me().initials}</div></div>
+  return `<div class="appbar"><div><div class="eyebrow">New U Sport Center · Kadıköy</div><div class="h1">Merhaba, ${me().name.split(' ')[0]}</div></div><div class="avatar">${me().initials}</div></div>
   <div class="hero"><div class="cap"><span>Aktif Paket</span><span class="mono">${daysLeft(p.endISO)} GÜN</span></div>
     <div class="num mono"><span class="accent">${p.lessons-p.used}</span><small> / ${p.lessons} ders kaldı</small></div>
     <div class="hline"><span style="width:${p.used/p.lessons*100}%"></span></div>
@@ -505,44 +516,59 @@ function renderTrainer(){
 }
 function pendCard(r){ return `<div class="card" style="padding:14px"><div class="row" style="background:none;border:none;padding:0 0 12px"><div class="mono-av wait">${r.initials}</div><div class="grow"><div class="t">${r.studentName}</div><div class="d mono">${DOW[new Date(r.dateISO).getDay()]} ${fmtShort(r.dateISO)} · ${hh(r.hour)}</div></div></div><div class="btnrow"><button class="b-ok" onclick="approve('${r.id}')">${ic('check',16)} Onayla</button><button class="b-no" onclick="reject('${r.id}')">${ic('x',16)} Reddet</button></div></div>`; }
 
+function pendBlock(){ const pend=pendingFor('t1'); return pend.length?`<div class="sect">Onay bekleyen · ${pend.length}</div>`+pend.map(pendCard).join(''):''; }
 function renderAgenda(){
-  const week=trWeek(); const off=S.dayOffset, sel=week[off]; const pend=pendingFor('t1');
-  const head=`<div class="appbar"><div><div class="eyebrow">${sameDay(sel,new Date())?'Bugün':fmtDay(sel)}</div><div class="h1">Takvim</div></div><div class="avatar">AY</div></div>
-  <div class="toggle"><button class="${S.agendaView==='day'?'on':''}" onclick="setAgenda('day')">Gün</button><button class="${S.agendaView==='week'?'on':''}" onclick="setAgenda('week')">Hafta</button></div>
-  ${weekNav(week,'trWeekShift(-1)','trWeekShift(1)',false)}`;
-  if(S.agendaView==='week'){
-    const times=[10,12,18,19,20];
-    return head+`<div class="card" style="padding:14px 10px">
-      <div class="wgrid" style="margin-bottom:6px"><span class="h"></span>${week.map(d=>`<span class="h">${DOW[d.getDay()]}</span>`).join('')}</div>
-      <div class="wgrid" style="row-gap:6px">${times.map(h=>`<span class="tlab">${h}</span>`+week.map(d=>{ const r=activeReqs('t1',iso(d)).find(x=>x.hour===h);
-        if(!r) return `<span class="cell free"></span>`; return `<span class="cell ${r.status==='pending'?'wait':'ok'}">${r.initials}</span>`; }).join('')).join('')}</div></div>
-    <div class="row"><div class="ic">${ic('arrowRight',18)}</div><div class="grow"><div class="t">Bir güne dokun</div><div class="d">Günlük ajandaya iner · kim geliyor görünür</div></div></div>
-    <div class="days">${week.map((d,i)=>`<div class="day ${i===off?'on':''}" onclick="setDay(${i})">${DOW[d.getDay()]}<span class="n">${d.getDate()}</span></div>`).join('')}</div>
-    ${pend.length?`<div class="sect">Onay bekleyen · ${pend.length}</div>`+pend.map(pendCard).join(''):''}`;
-  }
+  const isMonth=S.agendaView==='month';
+  const head=`<div class="appbar"><div><div class="eyebrow">${isMonth?'Aylık doluluk':'Bu hafta'}</div><div class="h1">Takvim</div></div><div class="avatar">AY</div></div>
+  <div class="toggle"><button class="${!isMonth?'on':''}" onclick="setAgenda('day')">Gün</button><button class="${isMonth?'on':''}" onclick="setAgenda('month')">Ay</button></div>`;
+  if(isMonth) return head+renderMonth()+pendBlock();
+  const week=trWeek(); const off=S.dayOffset, sel=week[off];
   const open=availHours('t1',sel.getDay());
   const rows=open.length?open.map(h=>{ const r=activeReqs('t1',iso(sel)).find(x=>x.hour===h);
     if(!r) return `<div class="tlrow"><span class="time">${hh(h)}</span><div class="slotcard empty" data-drop="1" data-hour="${h}" onclick="openAdd(${h})"><span>Boş</span><span class="addhint">+ Öğrenci ekle</span></div></div>`;
     const isNow=sameDay(sel,new Date())&&new Date().getHours()===h; const cls=r.status==='pending'?'wait':'ok';
     return `<div class="tlrow"><span class="time">${hh(h)}</span><div class="slotcard ${isNow?'now':''}" data-reqid="${r.id}"><div class="grip">${ic('grip',16)}</div><div class="mono-av ${cls==='wait'?'wait':''}">${r.initials}</div><div class="grow"><div class="t">${r.studentName}${isNow?' · sırada':''}</div><div class="d">${cls==='wait'?'Onay bekliyor':'Onaylı'}</div></div><span class="tag ${cls}">${cls==='wait'?'Bekliyor':'Onaylı'}</span></div></div>`; }).join(''):`<div class="empty">Bu gün kapalı — Müsaitlik'ten saat aç</div>`;
-  return head+`<div class="days">${week.map((d,i)=>`<div class="day ${i===off?'on':''}" onclick="setDay(${i})">${DOW[d.getDay()]}<span class="n">${d.getDate()}</span></div>`).join('')}</div>
-  ${pend.length?`<div class="sect">Onay bekleyen · ${pend.length}</div>`+pend.map(pendCard).join(''):''}
-  <div class="sect">Günün akışı</div>
-  ${open.length?`<div class="draghint">${ic('moveArrow',15)} Dersi kulpundan tutup boş saate sürükle — öğrenciye bildirilir</div>`:''}
-  <div class="tl">${rows}</div>`;
+  return head+weekNav(week,'trWeekShift(-1)','trWeekShift(1)',false)
+    +`<div class="days">${week.map((d,i)=>`<div class="day ${i===off?'on':''}" onclick="setDay(${i})">${DOW[d.getDay()]}<span class="n">${d.getDate()}</span></div>`).join('')}</div>`
+    +pendBlock()
+    +`<div class="sect">${sameDay(sel,new Date())?'Bugün':fmtDay(sel)} · akış</div>`
+    +(open.length?`<div class="draghint">${ic('moveArrow',15)} Dersi kulpundan tutup boş saate sürükle — öğrenciye bildirilir</div>`:'')
+    +`<div class="tl">${rows}</div>`;
 }
+function renderMonth(){
+  const base=new Date(); base.setHours(12,0,0,0); base.setDate(1); base.setMonth(base.getMonth()+S.monthOff);
+  const y=base.getFullYear(), m=base.getMonth();
+  const first=new Date(y,m,1); const lead=(first.getDay()===0?6:first.getDay()-1); const dim=new Date(y,m+1,0).getDate();
+  const cells=[]; for(let i=0;i<lead;i++)cells.push(null); for(let d=1;d<=dim;d++)cells.push(new Date(y,m,d,12)); while(cells.length%7)cells.push(null);
+  const tISO=iso(new Date());
+  const heads=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].map(x=>`<span class="mh">${x}</span>`).join('');
+  const grid=cells.map(d=>{ if(!d) return `<div class="mcell out"></div>`;
+    const dISO=iso(d), occ=activeReqs('t1',dISO).length, today=dISO===tISO;
+    return `<div class="mcell ${today?'today':''}" onclick="gotoDate('${dISO}')"><span class="dnum">${d.getDate()}</span>${occ>0?`<span class="occ" style="background:color-mix(in srgb,var(--accent) ${Math.min(100,42+occ*13)}%,var(--surface-3))">${occ}</span>`:''}</div>`; }).join('');
+  return `<div class="weeknav"><button class="navbtn" onclick="monthShift(-1)">${ic('chevronL',20)}</button>
+    <div class="wncenter"><div class="wnrange">${MONF[m]}</div><div class="wnmonth">${y}</div></div>
+    <button class="navbtn" onclick="monthShift(1)">${ic('chevronR',20)}</button></div>
+    <div class="card" style="padding:13px 11px"><div class="mgrid" style="margin-bottom:6px">${heads}</div><div class="mgrid">${grid}</div></div>
+    <div class="draghint">${ic('clock',15)} Kutudaki rakam = o gün dolu saat sayısı · güne dokun</div>`;
+}
+function gotoDate(dISO){ const t=new Date(dISO); t.setHours(12,0,0,0);
+  const mon0=new Date(S.mondayISO); mon0.setHours(12,0,0,0);
+  const tmon=addDays(t,(t.getDay()===0?-6:1-t.getDay()));
+  S.trWeek=Math.round((tmon-mon0)/(7*864e5)); S.dayOffset=(t.getDay()===0?6:t.getDay()-1); S.agendaView='day'; save(); render(); }
+function monthShift(d){ S.monthOff+=d; save(); render(); }
 function sameDay(a,b){ return iso(a)===iso(b); }
 
 function renderAvail(){
-  const wd=S.availDay; const open=availHours('t1',wd);
+  const wk=weekDatesFrom(S.avWeek); const wd=S.availDay; const open=availHours('t1',wd);
   const ranges=[]; let s=null,pv=null; open.forEach(h=>{ if(s===null){s=h;pv=h;} else if(h===pv+1){pv=h;} else {ranges.push([s,pv+1]); s=h; pv=h;} }); if(s!==null)ranges.push([s,pv+1]);
   return `<div class="appbar"><div><div class="eyebrow">Ahmet Yılmaz</div><div class="h1">Müsaitlik</div><div class="subline">Gün seç, ders vereceğin saatleri aç</div></div><div class="avatar">AY</div></div>
-  <div class="days">${[1,2,3,4,5,6,0].map(d=>`<div class="day ${d===wd?'on':''}" onclick="setAvailDay(${d})">${DOW[d]}</div>`).join('')}</div>
+  ${weekNav(wk,'avWeekShift(-1)','avWeekShift(1)',false)}
+  <div class="days">${wk.map(d=>`<div class="day ${d.getDay()===wd?'on':''}" onclick="setAvailDay(${d.getDay()})">${DOW[d.getDay()]}<span class="n">${d.getDate()}</span></div>`).join('')}</div>
   <div class="sect">${DOW[wd]} · açık saatler ${ranges.length?'':' (kapalı)'}</div>
   ${ranges.length?`<div class="chips">${ranges.map(r=>`<span class="chip mono">${ic('clock',13)} ${hh(r[0])}–${hh(r[1])}</span>`).join('')}</div>`:''}
   <div class="sect">Saatlere dokun · aç / kapat</div>
   <div class="hourgrid">${Array.from({length:15},(_,i)=>8+i).map(h=>`<div class="hourcell ${open.includes(h)?'on':''}" onclick="avToggle(${h})">${hh(h)}</div>`).join('')}</div>
-  <div class="row" style="background:var(--surface-2);border-style:dashed"><div class="ic">${ic('lock',18)}</div><div class="grow"><div class="t">Örn. 10:00–14:00 ve 18:00–22:00</div><div class="d">Seçtiğin her saat öğrenciye 1 saatlik dilim olarak açılır</div></div></div>`;
+  <div class="row" style="background:var(--surface-2);border-style:dashed"><div class="ic">${ic('refresh',18)}</div><div class="grow"><div class="t">Her ${DOW[wd]} için geçerli</div><div class="d">Seçtiğin saatler tüm haftalarda o güne tekrarlanır · her saat 1 dilim</div></div></div>`;
 }
 function renderTrStudents(){ const list=studentsOf('t1');
   return `<div class="appbar"><div><div class="eyebrow">Ahmet Yılmaz</div><div class="h1">Öğrencilerim</div><div class="subline">Sana tanımlı ${list.length} öğrenci</div></div><div class="avatar">AY</div></div>
@@ -555,7 +581,7 @@ function renderAdmin(){
   const sc=S.screen.admin;
   if(sc==='members') return renderMembers();
   if(sc==='panel'){ const g=monthData(0);
-    return `<div class="appbar"><div><div class="eyebrow">Yönetim</div><div class="h1">Grand Fitness</div><div class="subline">${S.roster.length} üye · ${TRAINERS.length} hoca</div></div><div class="avatar">GF</div></div>
+    return `<div class="appbar"><div><div class="eyebrow">Yönetim</div><div class="h1">New U Sport Center</div><div class="subline">${S.roster.length} üye · ${TRAINERS.length} hoca</div></div><div class="avatar">NU</div></div>
     <div class="stat2"><div class="stat"><div class="n">${S.roster.length}</div><div class="l">Aktif öğrenci</div></div><div class="stat"><div class="n">${TRAINERS.length}</div><div class="l">Hoca</div></div></div>
     <div class="stat2"><div class="stat"><div class="n">${g.given}</div><div class="l">Bu ay ders</div></div><div class="stat"><div class="n" style="color:var(--stop)">${g.cancel}</div><div class="l">İptal</div></div></div>
     <button class="btn" onclick="go('reports')">${ic('chart',18)} Raporları aç</button>
@@ -571,7 +597,7 @@ function renderReports(){
   const g=monthData(S.repMonth), max=Math.max(...g.perTrainer.map(x=>x[1]));
   const counts={}; S.requests.filter(x=>x.status==='approved'||x.status==='pending').forEach(x=>counts[x.hour]=(counts[x.hour]||0)+1);
   const hs=Object.entries(counts).map(([h,c])=>[+h,c]).sort((a,b)=>b[1]-a[1]).slice(0,5); const hmax=Math.max(1,...hs.map(x=>x[1]));
-  return `<div class="appbar"><div><div class="eyebrow">Raporlar</div><div class="h1">Performans</div></div><div class="avatar">GF</div></div>
+  return `<div class="appbar"><div><div class="eyebrow">Raporlar</div><div class="h1">Performans</div></div><div class="avatar">NU</div></div>
   <div class="weeknav"><button class="navbtn" onclick="repMonthShift(-1)">${ic('chevronL',20)}</button>
     <div class="wncenter"><div class="wnrange">${MONF[d.getMonth()]}</div><div class="wnmonth">${d.getFullYear()}</div></div>
     <button class="navbtn" ${S.repMonth===0?'disabled':''} onclick="repMonthShift(1)">${ic('chevronR',20)}</button></div>
@@ -584,7 +610,7 @@ function renderReports(){
 }
 function renderMembers(){
   const d=S.def;
-  return `<div class="appbar"><div><div class="eyebrow">Yönetim</div><div class="h1">Üyeler</div></div><div class="avatar">GF</div></div>
+  return `<div class="appbar"><div><div class="eyebrow">Yönetim</div><div class="h1">Üyeler</div></div><div class="avatar">NU</div></div>
   <div class="card">
     <div class="sect" style="margin:0 0 12px">Paket tanımla / güncelle</div>
     <div class="field"><label>Öğrenci</label><select onchange="defPickMember(this.value)">${S.roster.map(s=>`<option value="${s.id}" ${s.id===d.memberId?'selected':''}>${s.name}</option>`).join('')}</select></div>
