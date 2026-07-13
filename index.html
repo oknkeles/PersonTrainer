@@ -104,6 +104,7 @@
   .day{ flex:0 0 auto; min-width:44px; text-align:center; padding:9px 4px; border-radius:11px; font-size:11px; font-weight:700; background:var(--surface); border:1px solid var(--line); color:var(--ink-2); text-transform:uppercase; letter-spacing:.03em; }
   .day.on{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
   .day.off{ opacity:.4; } .day .n{ display:block; font-size:15px; margin-top:3px; font-family:var(--mono); letter-spacing:-.03em; }
+  .day{ position:relative; } .ovdot{ position:absolute; top:5px; right:6px; width:5px; height:5px; border-radius:50%; background:var(--accent); }
 
   .slots{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
   .slot{ text-align:center; font-size:14px; font-weight:600; padding:13px 4px; border-radius:11px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-family:var(--mono); letter-spacing:-.02em; }
@@ -270,8 +271,11 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v5';
-const TRAINERS=[{id:'t1',name:'Ahmet Yılmaz',initials:'AY'},{id:'t2',name:'Ceren Aksoy',initials:'CA'}];
+const KEY='pt_studio_v6';
+const TRAINERS=[{id:'t1',name:'Ahmet Yılmaz',initials:'AY'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
+  {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
+  {id:'t6',name:'Kerem Su',initials:'KS'},{id:'t7',name:'Ayça Ün',initials:'AÜ'},{id:'t8',name:'Barış El',initials:'BE'},
+  {id:'t9',name:'Ece Nar',initials:'EN'},{id:'t10',name:'Tolga Ay',initials:'TA'}];
 const trainer=id=>TRAINERS.find(t=>t.id===id);
 const firstName=id=>trainer(id).name.split(' ')[0];
 
@@ -312,6 +316,7 @@ function seed(){
   [1,2,3,4,5].forEach(d=>{ t1w[d]=[...rng(10,14),...rng(18,22)]; t2w[d]=[...rng(9,12),...rng(17,20)]; });
   t1w[6]=rng(10,13); // cmt
   const availability={t1:t1w,t2:t2w};
+  ['t3','t4','t5','t6','t7','t8','t9','t10'].forEach(id=>{ const w={}; [1,2,3,4,5].forEach(d=>{ w[d]=[...rng(10,13),...rng(17,21)]; }); availability[id]=w; });
   const plan=[
     [0,10,'Mehmet Barış','approved'],[0,18,'Emre Demir','approved'],[0,19,'Kaan Tunç','approved'],[0,20,'Naz Ak','approved'],
     [1,10,'Zeynep Kaya','approved'],[1,18,'Emre Demir','approved'],[1,19,'Rüya Yıldız','pending'],[1,20,'Kaan Tunç','approved'],
@@ -332,14 +337,14 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:'Ahmet Hoca · Salı 10:00',when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:'Ceren Hoca · onay bekliyor',when:'dün'},
   ];
-  return {v:5, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  return {v:6, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
-    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null,
+    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
     roster, requests, availability, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==5) S=seed(); }catch(e){ S=seed(); } }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==6) S=seed(); }catch(e){ S=seed(); } }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 function resetDemo(){ if(confirm('Demo verileri sıfırlansın mı?')){ S=seed(); save(); render(); toast('Sıfırlandı'); } }
 const me=()=>S.roster.find(r=>r.id===S.meId);
@@ -351,7 +356,8 @@ const trWeek=()=>weekDatesFrom(S.trWeek);
 const bookWeek=()=>weekDatesFrom(S.bookWeek);
 function availHours(tId,wd){ return ((S.availability[tId]||{})[wd]||[]).slice().sort((a,b)=>a-b); }
 function activeReqs(tId,dISO){ return S.requests.filter(r=>r.trainerId===tId&&r.dateISO===dISO&&(r.status==='approved'||r.status==='pending')); }
-function freeHours(tId,d){ const taken=activeReqs(tId,iso(d)).map(r=>r.hour); return availHours(tId,d.getDay()).filter(h=>!taken.includes(h)); }
+function availHoursForDate(tId,d){ const ov=((S.availOverrides||{})[tId]||{})[iso(d)]; const base=(ov!==undefined?ov:((S.availability[tId]||{})[d.getDay()]||[])); return base.slice().sort((a,b)=>a-b); }
+function freeHours(tId,d){ const taken=activeReqs(tId,iso(d)).map(r=>r.hour); return availHoursForDate(tId,d).filter(h=>!taken.includes(h)); }
 function pendingFor(tId){ return S.requests.filter(r=>r.trainerId===tId&&r.status==='pending'); }
 function studentsOf(tId){ return S.roster.filter(r=>r.trainers.includes(tId)); }
 const pkgEnded=p=>p.used>=p.lessons||daysLeft(p.endISO)===0;
@@ -378,7 +384,15 @@ function moveLesson(rid,newHour){ const r=S.requests.find(x=>x.id===rid); if(!r|
   save(); render(); toast(`${s.name}: ${hh(old)} → ${hh(newHour)} · öğrenciye bildirildi`); }
 function extendMonths(id,m){ const p=member(id).pkg; p.endISO=iso(addDays(new Date(p.endISO),m*30)); p.months+=m; save(); render(); toast(`${member(id).name.split(' ')[0]} · süre +${m} ay uzatıldı`); }
 function addLessons(id,n){ member(id).pkg.lessons+=n; save(); render(); toast(`${member(id).name.split(' ')[0]} · +${n} ders`); }
-function avToggle(hr){ const T=curTrainer(); const wd=S.availDay; S.availability[T]=S.availability[T]||{}; const a=(S.availability[T][wd]=S.availability[T][wd]||[]); const i=a.indexOf(hr); if(i>=0)a.splice(i,1); else a.push(hr); save(); render(); }
+function avSelDate(){ const wk=weekDatesFrom(S.avWeek); return wk.find(x=>x.getDay()===S.availDay)||wk[0]; }
+function avToggle(hr){ const T=curTrainer();
+  if(S.avMode==='date'){ const d=avSelDate(); const k=iso(d); S.availOverrides=S.availOverrides||{}; S.availOverrides[T]=S.availOverrides[T]||{};
+    if(S.availOverrides[T][k]===undefined) S.availOverrides[T][k]=[...availHours(T,d.getDay())];
+    const a=S.availOverrides[T][k]; const i=a.indexOf(hr); if(i>=0)a.splice(i,1); else a.push(hr);
+  } else { const wd=S.availDay; S.availability[T]=S.availability[T]||{}; const a=(S.availability[T][wd]=S.availability[T][wd]||[]); const i=a.indexOf(hr); if(i>=0)a.splice(i,1); else a.push(hr); }
+  save(); render(); }
+function setAvMode(v){ S.avMode=v; save(); render(); }
+function clearOverride(k){ const T=curTrainer(); if(S.availOverrides&&S.availOverrides[T]) delete S.availOverrides[T][k]; save(); render(); toast('Bu tarih tekrar haftalık düzene döndü'); }
 function deleteLesson(rid){ const r=S.requests.find(x=>x.id===rid); if(!r) return; const s=member(r.studentId); const nm=s?s.name.split(' ')[0]:'Ders';
   if(!confirm(`${s?s.name:'Bu ders'} · ${DOW[new Date(r.dateISO).getDay()]} ${hh(r.hour)} dersi silinsin mi?`)) return;
   const wasApproved=r.status==='approved'; if(wasApproved&&s) s.pkg.used=Math.max(0,s.pkg.used-1);
@@ -459,6 +473,7 @@ function render(){
   h+=renderTabs();
   h+=addSheet();
   h+=lessonSheet();
+  h+=trPickSheet();
   $('app').innerHTML=h;
 }
 
@@ -499,13 +514,13 @@ function lessonRow(r,cls,label){ const tap=r.status==='approved';
 
 function renderBook(){
   const week=bookWeek(); const sel=week[S.bookDayOffset]; const trs=me().trainers; if(!trs.includes(S.bookTrainer))S.bookTrainer=trs[0];
-  const open=availHours(S.bookTrainer,sel.getDay()); const free=freeHours(S.bookTrainer,sel);
+  const open=availHoursForDate(S.bookTrainer,sel); const free=freeHours(S.bookTrainer,sel);
   return `<div class="appbar"><div><button class="backbtn" onclick="go('home')">${ic('chevronL',18)} Geri</button><div class="h1" style="margin-top:8px">Ders Al</div></div></div>
   <div class="sect">Hoca</div>
   <div class="btnrow">${trs.map(id=>`<button class="btn ${id===S.bookTrainer?'':'ghost'} sm" style="flex:1" onclick="setBookTrainer('${id}')">${trainer(id).name.split(' ')[0]}</button>`).join('')}</div>
   <div class="sect">Hafta</div>
   ${weekNav(week,'bookWeekShift(-1)','bookWeekShift(1)',S.bookWeek===0)}
-  <div class="days">${week.map((d,i)=>{ const has=availHours(S.bookTrainer,d.getDay()).length>0;
+  <div class="days">${week.map((d,i)=>{ const has=availHoursForDate(S.bookTrainer,d).length>0;
     return `<div class="day ${i===S.bookDayOffset?'on':''} ${has?'':'off'}" onclick="setBookDay(${i})">${DOW[d.getDay()]}<span class="n">${d.getDate()}</span></div>`; }).join('')}</div>
   <div class="sect">Boş saatler · ${fmtDay(sel)}</div>
   ${open.length?`<div class="slots">${open.map(hr=>{ const isFree=free.includes(hr); const on=S.bookHour===hr&&isFree;
@@ -528,11 +543,11 @@ function confirmMove(){ const r=S.requests.find(x=>x.id===S.moveLessonId); if(!r
 function renderReschedule(){
   const r=S.requests.find(x=>x.id===S.moveLessonId); if(!r){ S.screen.student='home'; return renderStudent(); }
   const T=r.trainerId; const week=bookWeek(); const sel=week[S.bookDayOffset];
-  const open=availHours(T,sel.getDay()); const free=freeHours(T,sel);
+  const open=availHoursForDate(T,sel); const free=freeHours(T,sel);
   return `<div class="appbar"><div><button class="backbtn" onclick="cancelMove()">${ic('chevronL',18)} Geri</button><div class="h1" style="margin-top:8px">Dersi Taşı</div><div class="subline mono">${firstName(T)} Hoca · şu an ${DOW[new Date(r.dateISO).getDay()]} ${hh(r.hour)}</div></div></div>
   <div class="sect">Hafta</div>
   ${weekNav(week,'bookWeekShift(-1)','bookWeekShift(1)',S.bookWeek===0)}
-  <div class="days">${week.map((d,i)=>{ const has=availHours(T,d.getDay()).length>0; return `<div class="day ${i===S.bookDayOffset?'on':''} ${has?'':'off'}" onclick="setBookDay(${i})">${DOW[d.getDay()]}<span class="n">${d.getDate()}</span></div>`; }).join('')}</div>
+  <div class="days">${week.map((d,i)=>{ const has=availHoursForDate(T,d).length>0; return `<div class="day ${i===S.bookDayOffset?'on':''} ${has?'':'off'}" onclick="setBookDay(${i})">${DOW[d.getDay()]}<span class="n">${d.getDate()}</span></div>`; }).join('')}</div>
   <div class="sect">Yeni saat · ${fmtDay(sel)}</div>
   ${open.length?`<div class="slots">${open.map(hr=>{ const isFree=free.includes(hr); const cur=iso(sel)===r.dateISO&&hr===r.hour; const on=S.bookHour===hr&&isFree;
      return `<div class="slot ${on?'sel':(isFree&&!cur)?'free':'busy'}" ${isFree&&!cur?`onclick="setBookHour(${hr})"`:''}>${hh(hr)}</div>`; }).join('')}</div>`:`<div class="empty">Hoca bu gün kapalı — başka gün seç</div>`}
@@ -600,7 +615,7 @@ function agendaBody(){
   const toggle=`<div class="toggle"><button class="${!isMonth?'on':''}" onclick="setAgenda('day')">Gün</button><button class="${isMonth?'on':''}" onclick="setAgenda('month')">Ay</button></div>`;
   if(isMonth) return toggle+renderMonth()+pendBlock();
   const week=trWeek(); const off=S.dayOffset, sel=week[off];
-  const open=availHours(T,sel.getDay());
+  const open=availHoursForDate(T,sel);
   const rows=open.length?open.map(h=>{ const r=activeReqs(T,iso(sel)).find(x=>x.hour===h);
     if(!r) return `<div class="tlrow"><span class="time">${hh(h)}</span><div class="slotcard empty" data-drop="1" data-hour="${h}" onclick="openAdd(${h})"><span>Boş</span><span class="addhint">+ Öğrenci ekle</span></div></div>`;
     const isNow=sameDay(sel,new Date())&&new Date().getHours()===h; const cls=r.status==='pending'?'wait':'ok';
@@ -637,15 +652,19 @@ function monthShift(d){ S.monthOff+=d; save(); render(); }
 function sameDay(a,b){ return iso(a)===iso(b); }
 
 function availBody(){
-  const T=curTrainer(); const wk=weekDatesFrom(S.avWeek); const wd=S.availDay; const open=availHours(T,wd);
+  const T=curTrainer(); const wk=weekDatesFrom(S.avWeek); const wd=S.availDay; const sel=wk.find(x=>x.getDay()===wd)||wk[0];
+  const dateMode=S.avMode==='date';
+  const open=dateMode?availHoursForDate(T,sel):availHours(T,wd);
   const ranges=[]; let s=null,pv=null; open.forEach(h=>{ if(s===null){s=h;pv=h;} else if(h===pv+1){pv=h;} else {ranges.push([s,pv+1]); s=h; pv=h;} }); if(s!==null)ranges.push([s,pv+1]);
+  const hasOv=k=>((S.availOverrides||{})[T]||{})[k]!==undefined;
   return `${weekNav(wk,'avWeekShift(-1)','avWeekShift(1)',false)}
-  <div class="days">${wk.map(d=>`<div class="day ${d.getDay()===wd?'on':''}" onclick="setAvailDay(${d.getDay()})">${DOW[d.getDay()]}<span class="n">${d.getDate()}</span></div>`).join('')}</div>
-  <div class="sect">${DOW[wd]} · açık saatler ${ranges.length?'':' (kapalı)'}</div>
+  <div class="days">${wk.map(d=>`<div class="day ${d.getDay()===wd?'on':''}" onclick="setAvailDay(${d.getDay()})">${DOW[d.getDay()]}<span class="n">${d.getDate()}</span>${hasOv(iso(d))?'<span class="ovdot"></span>':''}</div>`).join('')}</div>
+  <div class="toggle" style="margin-top:2px"><button class="${!dateMode?'on':''}" onclick="setAvMode('recurring')">Her ${DOW[wd]}</button><button class="${dateMode?'on':''}" onclick="setAvMode('date')">Sadece ${sel.getDate()} ${MON[sel.getMonth()]}</button></div>
+  <div class="sect">Açık saatler ${ranges.length?'':'· kapalı'}</div>
   ${ranges.length?`<div class="chips">${ranges.map(r=>`<span class="chip mono">${ic('clock',13)} ${hh(r[0])}–${hh(r[1])}</span>`).join('')}</div>`:''}
   <div class="sect">Saatlere dokun · aç / kapat</div>
   <div class="hourgrid">${Array.from({length:15},(_,i)=>8+i).map(h=>`<div class="hourcell ${open.includes(h)?'on':''}" onclick="avToggle(${h})">${hh(h)}</div>`).join('')}</div>
-  <div class="row" style="background:var(--surface-2);border-style:dashed"><div class="ic">${ic('refresh',18)}</div><div class="grow"><div class="t">Her ${DOW[wd]} için geçerli</div><div class="d">Seçtiğin saatler tüm haftalarda o güne tekrarlanır · her saat 1 dilim</div></div></div>`;
+  <div class="row" style="background:var(--surface-2);border-style:dashed"><div class="ic">${ic(dateMode?'calendar':'refresh',18)}</div><div class="grow"><div class="t">${dateMode?`Sadece ${DOW[sel.getDay()]} ${sel.getDate()} ${MON[sel.getMonth()]}`:`Her ${DOW[wd]} · tüm haftalar`}</div><div class="d">${dateMode?'Bu tarihe özel · diğer haftalar etkilenmez':'Haftalık şablon · tek gün için "Sadece…" seç'}</div></div>${dateMode&&hasOv(iso(sel))?`<button class="lesdel" onclick="clearOverride('${iso(sel)}')">${ic('refresh',15)}</button>`:''}</div>`;
 }
 function renderTrStudents(){ const list=studentsOf('t1');
   return `<div class="appbar"><div><div class="eyebrow">Ahmet Yılmaz</div><div class="h1">Öğrencilerim</div><div class="subline">Sana tanımlı ${list.length} öğrenci</div></div><div class="avatar">AY</div></div>
@@ -670,12 +689,26 @@ function renderAdmin(){
 function renderAdminTrainers(){
   const T=curTrainer(); const av=S.adminAvail;
   const appbar=`<div class="appbar"><div><div class="eyebrow">Hoca yönetimi · her hoca için</div><div class="h1">${trainer(T).name}</div><div class="subline">Takvimini yönet · ders sil/kaydır/ekle · onayla</div></div><div class="avatar">NU</div></div>`;
-  const picker=`<div class="sect" style="margin-top:2px">Hoca seç</div><div class="toggle">${TRAINERS.map(t=>`<button class="${t.id===T?'on':''}" onclick="setAdminTrainer('${t.id}')">${t.name.split(' ')[0]}</button>`).join('')}</div>`;
+  const picker=`<div class="sect" style="margin-top:2px">Hoca</div><div class="row" style="cursor:pointer" onclick="openTrPick()"><div class="mono-av">${trainer(T).initials}</div><div class="grow"><div class="t">${trainer(T).name}</div><div class="d">${TRAINERS.length} hoca · değiştirmek için dokun</div></div><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`;
   const modes=`<div class="toggle"><button class="${!av?'on':''}" onclick="setAdminAvail(false)">Takvim</button><button class="${av?'on':''}" onclick="setAdminAvail(true)">Müsaitlik</button></div>`;
   return appbar+picker+modes+(av?availBody():agendaBody());
 }
 function setAdminTrainer(id){ S.adminTrainer=id; save(); render(); }
 function setAdminAvail(v){ S.adminAvail=v; save(); render(); }
+function openTrPick(){ S.trPick=true; S.trPickSearch=''; save(); render(); }
+function closeTrPick(){ S.trPick=false; save(); render(); }
+function filterTrPick(v){ S.trPickSearch=v; const el=document.getElementById('trPickList'); if(el) el.innerHTML=trPickListHTML(); }
+function pickTrainer(id){ S.adminTrainer=id; S.trPick=false; save(); render(); }
+function trPickListHTML(){ const q=(S.trPickSearch||'').toLocaleLowerCase('tr'); const cur=S.adminTrainer||'t1';
+  const list=TRAINERS.filter(t=>t.name.toLocaleLowerCase('tr').includes(q));
+  if(!list.length) return `<div class="empty">Eşleşen hoca yok</div>`;
+  return list.map(t=>{ const cnt=S.requests.filter(r=>r.trainerId===t.id&&(r.status==='approved'||r.status==='pending')).length; const pend=pendingFor(t.id).length+changeReqs(t.id).length;
+    return `<div class="pickrow" style="cursor:pointer" onclick="pickTrainer('${t.id}')"><div class="mono-av ${t.id===cur?'':''}">${t.initials}</div><div class="grow"><div class="t">${t.name}</div><div class="d mono">${cnt} aktif ders${pend?` · ${pend} talep`:''}</div></div>${t.id===cur?`<span class="tag ok">Seçili</span>`:`<span style="color:var(--ink-3);display:flex">${ic('chevronR',16)}</span>`}</div>`; }).join(''); }
+function trPickSheet(){ if(!S.trPick) return '';
+  return `<div class="sheet-bg" onclick="if(event.target===this)closeTrPick()"><div class="sheet">
+    <div class="sheet-h"><div><div class="eyebrow">Yönetim</div><div class="h1">Hoca seç</div></div><button class="sheet-x" onclick="closeTrPick()">${ic('x',18)}</button></div>
+    <div class="searchbar">${ic('search',18)}<input placeholder="Hoca ara…" oninput="filterTrPick(this.value)"></div>
+    <div class="sheet-list" id="trPickList">${trPickListHTML()}</div></div></div>`; }
 function monthData(off){ const f=Math.max(.55,1+off*0.08);
   return {given:Math.round(312*f),cancel:Math.round(27*f),
     perTrainer:[['Ahmet',96],['Ceren',78],['Deniz',64],['Mert',44],['Sıla',30]].map(x=>[x[0],Math.round(x[1]*f)])}; }
