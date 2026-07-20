@@ -57,7 +57,16 @@
   .content{ flex:1; padding:6px 16px 118px; display:flex; flex-direction:column; gap:12px; }
   .sect{ font-size:10.5px; font-weight:700; letter-spacing:.15em; color:var(--ink-3); text-transform:uppercase; margin:10px 1px 1px; display:flex; align-items:center; justify-content:space-between; }
 
-  .card{ background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px; }
+  /* müsaitlik: kompakt mod + saat havuzu */
+  .modebar{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; padding:2px 1px; }
+  .modelbl{ font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); }
+  .mchip{ padding:8px 13px; border-radius:10px; font-size:12.5px; font-weight:650; color:var(--ink-2); background:var(--surface-2); border:1px solid var(--hair); transition:.16s ease; }
+  .mchip.on{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .mchip.rev{ padding:8px 10px; display:inline-flex; color:var(--accent); }
+  .availhead{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin:10px 1px 0; }
+  .availsum{ font-size:12.5px; font-weight:650; color:var(--accent); text-align:right; }
+
+  .card{ background:var(--surface); border:1px solid var(--hair); border-radius:18px; padding:16px; }
   /* inverted hero — architectural */
   .hero{ background:var(--ink); color:var(--bg); border:none; border-radius:16px; padding:19px; }
   @media (prefers-color-scheme: light){ .hero{ box-shadow:0 20px 40px -24px rgba(14,14,16,.5); } }
@@ -69,7 +78,8 @@
   .hline>span{ display:block; height:100%; background:var(--accent); }
   .hero .foot{ display:flex; justify-content:space-between; margin-top:12px; font-size:12px; opacity:.7; }
 
-  .row{ display:flex; align-items:center; gap:13px; padding:13px 14px; background:var(--surface); border:1px solid var(--line); border-radius:14px; }
+  .row{ display:flex; align-items:center; gap:13px; padding:14px; background:var(--surface); border:1px solid var(--hair); border-radius:16px; transition:.16s ease; }
+  .row[onclick]:active{ transform:scale(.994); background:var(--surface-2); }
   .ic{ width:38px;height:38px;border-radius:11px; display:flex;align-items:center;justify-content:center; flex:none; background:var(--surface-2); color:var(--ink); }
   .ic svg{ width:19px;height:19px; } .ic.acc{ background:var(--accent-soft); color:var(--accent); } .ic.ok{ background:var(--ok-bg); color:var(--ok);} .ic.wait{ background:var(--wait-bg); color:var(--wait);} .ic.stop{ background:var(--stop-bg); color:var(--stop);}
   .mono-av{ width:38px;height:38px;border-radius:11px; background:var(--ink); color:var(--bg); display:flex;align-items:center;justify-content:center; font-weight:700; font-size:13px; flex:none; letter-spacing:-.02em; }
@@ -80,8 +90,8 @@
   .tag{ font-size:10.5px; font-weight:700; padding:5px 9px; border-radius:7px; white-space:nowrap; letter-spacing:-.01em; text-transform:uppercase; }
   .tag.ok{ background:var(--ok-bg); color:var(--ok);} .tag.wait{ background:var(--wait-bg); color:var(--wait);} .tag.stop{ background:var(--stop-bg); color:var(--stop);} .tag.mut{ background:var(--surface-2); color:var(--ink-3);}
 
-  .btn{ background:var(--accent); color:#fff; border-radius:13px; padding:15px; font-size:15px; font-weight:650; text-align:center; width:100%; letter-spacing:-.01em; display:flex; align-items:center; justify-content:center; gap:8px; }
-  .btn:active{ background:var(--accent-ink); }
+  .btn{ background:var(--accent); color:#fff; border-radius:15px; padding:16px; font-size:15px; font-weight:650; text-align:center; width:100%; letter-spacing:-.01em; display:flex; align-items:center; justify-content:center; gap:8px; transition:.16s ease; box-shadow:0 10px 22px -14px color-mix(in srgb,var(--accent) 80%,transparent); }
+  .btn:active{ background:var(--accent-ink); transform:scale(.985); }
   .btn svg{ width:18px;height:18px; }
   .btn.ghost{ background:var(--surface); color:var(--ink); border:1px solid var(--line); }
   .btn.sm{ padding:11px; font-size:13px; border-radius:11px; }
@@ -101,21 +111,23 @@
 
   .days{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:1px; }
   .days::-webkit-scrollbar{ display:none; }
-  .day{ flex:0 0 auto; min-width:44px; text-align:center; padding:9px 4px; border-radius:11px; font-size:11px; font-weight:700; background:var(--surface); border:1px solid var(--line); color:var(--ink-2); text-transform:uppercase; letter-spacing:.03em; }
+  .day{ flex:0 0 auto; min-width:46px; text-align:center; padding:10px 5px; border-radius:13px; font-size:11px; font-weight:700; background:var(--surface); border:1px solid var(--hair); color:var(--ink-2); text-transform:uppercase; letter-spacing:.03em; transition:.16s ease; }
+  .day:active{ transform:scale(.96); }
   .day.on{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
   .day.off{ opacity:.4; } .day .n{ display:block; font-size:15px; margin-top:3px; font-family:var(--mono); letter-spacing:-.03em; }
   .day{ position:relative; } .ovdot{ position:absolute; top:5px; right:6px; width:5px; height:5px; border-radius:50%; background:var(--accent); }
 
   .slots{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-  .slot{ text-align:center; font-size:14px; font-weight:600; padding:13px 4px; border-radius:11px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-family:var(--mono); letter-spacing:-.02em; }
+  .slot{ text-align:center; font-size:14px; font-weight:600; padding:14px 4px; border-radius:13px; border:1px solid var(--hair); background:var(--surface); color:var(--ink); font-family:var(--mono); letter-spacing:-.02em; transition:.16s ease; }
+  .slot:active{ transform:scale(.96); }
   .slot.free{ border-color:var(--ink); }
   .slot.sel{ background:var(--accent); border-color:var(--accent); color:#fff; }
   .slot.busy{ color:var(--ink-3); background:var(--surface-2); border-style:dashed; text-decoration:line-through; }
 
   /* toggle segmented */
-  .toggle{ display:flex; background:var(--surface-2); border:1px solid var(--line); border-radius:11px; padding:3px; }
-  .toggle button{ flex:1; padding:9px; border-radius:8px; font-size:13px; font-weight:650; color:var(--ink-2); }
-  .toggle button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.12); }
+  .toggle{ display:flex; background:var(--surface-2); border:1px solid var(--hair); border-radius:13px; padding:4px; }
+  .toggle button{ flex:1; padding:10px; border-radius:10px; font-size:13px; font-weight:650; color:var(--ink-2); transition:.18s ease; }
+  .toggle button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.06), 0 6px 14px -10px rgba(0,0,0,.35); }
 
   /* day agenda timeline */
   .tl{ display:flex; flex-direction:column; }
@@ -141,7 +153,7 @@
   .cell.free{ background:transparent; border-style:dashed; } .cell.ok{ background:var(--ink); border-color:var(--ink); } .cell.wait{ background:var(--wait); border-color:var(--wait); color:#fff;}
 
   .stat2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .stat{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:15px; }
+  .stat{ background:var(--surface); border:1px solid var(--hair); border-radius:17px; padding:16px; }
   .stat .n{ font-size:30px; font-weight:700; font-family:var(--mono); letter-spacing:-.03em; line-height:1; }
   .stat .n .u{ font-size:13px; color:var(--ink-3); font-weight:500; }
   .stat .l{ font-size:11.5px; color:var(--ink-2); margin-top:6px; font-weight:600; }
@@ -200,9 +212,10 @@
   .quick.on{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
 
   /* availability hour grid */
-  .hourgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-  .hourcell{ padding:12px 2px; border-radius:10px; border:1px solid var(--line); background:var(--surface-2); font-size:13px; font-weight:600; color:var(--ink-2); text-align:center; font-family:var(--mono); letter-spacing:-.02em; }
-  .hourcell.on{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .hourgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:9px; }
+  .hourcell{ padding:15px 2px; border-radius:13px; border:1px solid var(--hair); background:var(--surface-2); font-size:13.5px; font-weight:600; color:var(--ink-3); text-align:center; font-family:var(--mono); letter-spacing:-.02em; transition:.16s ease; }
+  .hourcell:active{ transform:scale(.96); }
+  .hourcell.on{ background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 8px 18px -10px color-mix(in srgb,var(--accent) 75%,transparent); }
 
   /* arama kutusu */
   .searchbar{ display:flex; align-items:center; gap:9px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:11px 13px; }
@@ -233,6 +246,10 @@
   .tb.on::before{ content:""; position:absolute; top:0; width:20px; height:2.5px; border-radius:3px; background:var(--accent); }
   .tb .badge{ position:absolute; top:2px; right:6px; min-width:15px; height:15px; padding:0 4px; border-radius:8px; background:var(--accent); color:#fff; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center; font-family:var(--mono); }
 
+  @media (prefers-color-scheme: light){
+    .card:not(.hero), .row, .stat, .slotcard:not(.empty){ box-shadow:0 1px 2px rgba(16,17,22,.035), 0 10px 26px -20px rgba(16,17,22,.22); }
+    .toggle, .searchbar, .hourcell:not(.on){ box-shadow:none; }
+  }
   .empty{ text-align:center; color:var(--ink-3); font-size:13px; padding:28px 10px; font-weight:500; }
   .toast{ position:fixed; bottom:calc(var(--safe-b) + 86px); left:50%; transform:translateX(-50%) translateY(16px); z-index:60;
     background:var(--ink); color:var(--bg); padding:12px 18px; border-radius:12px; font-size:13.5px; font-weight:650; opacity:0; transition:.28s; box-shadow:0 14px 34px -10px rgba(0,0,0,.5); max-width:90%; text-align:center;}
@@ -410,6 +427,7 @@ function exportPayrollCSV(){
   toast('CSV indirildi · Excel ile açabilirsin');
 }
 function setRate(id,v){ S.rates=S.rates||{}; S.rates[id]=Math.max(0,Math.min(100,parseInt(v)||0)); save(); render(); }
+function setRateLive(id,v){ S.rates=S.rates||{}; S.rates[id]=Math.max(0,Math.min(100,parseInt(v)||0)); save(); }
 
 function book(){
   const sel=bookWeek()[S.bookDayOffset]; const t=trainer(S.bookTrainer); const p=me().pkg;
@@ -719,16 +737,14 @@ function availBody(){
   const hasOv=k=>((S.availOverrides||{})[T]||{})[k]!==undefined;
   return `${weekNav(wk,'avWeekShift(-1)','avWeekShift(1)',false)}
   <div class="days">${wk.map(d=>`<div class="day ${d.getDay()===wd?'on':''}" onclick="setAvailDay(${d.getDay()})">${DOW[d.getDay()]}<span class="n">${d.getDate()}</span>${hasOv(iso(d))?'<span class="ovdot"></span>':''}</div>`).join('')}</div>
-  <div class="toggle" style="margin-top:2px"><button class="${!dateMode?'on':''}" onclick="setAvMode('recurring')">Her ${DOW[wd]}</button><button class="${dateMode?'on':''}" onclick="setAvMode('date')">Sadece ${sel.getDate()} ${MON[sel.getMonth()]}</button></div>
-  <div class="sect">Açık saatler ${ranges.length?'':'· kapalı'}</div>
-  ${ranges.length?`<div class="chips">${ranges.map(r=>`<span class="chip mono">${ic('clock',13)} ${hh(r[0])}–${hh(r[1])}</span>`).join('')}</div>`:''}
-  <div class="sect">Hızlı aralık ekle</div>
-  <div class="quickrow">${[[9,13],[10,14],[12,16],[17,21],[18,22],[9,22]].map(r=>`<div class="quick" onclick="avPreset(${r[0]},${r[1]})">${pad(r[0])}–${pad(r[1])}</div>`).join('')}<div class="quick" onclick="avClear()">Temizle</div></div>
-  ${!dateMode?`<div class="sect">Bu düzeni kopyala</div>
-  <div class="btnrow"><button class="btn ghost sm" onclick="avApplyTo([1,2,3,4,5])">${ic('refresh',16)} Hafta içi</button><button class="btn ghost sm" onclick="avApplyTo([1,2,3,4,5,6,0])">${ic('refresh',16)} Tüm hafta</button></div>`:''}
-  <div class="sect">İnce ayar · saate dokun</div>
-  <div class="hourgrid">${Array.from({length:15},(_,i)=>8+i).map(h=>`<div class="hourcell ${open.includes(h)?'on':''}" onclick="avToggle(${h})">${hh(h)}</div>`).join('')}</div>
-  <div class="row" style="background:var(--surface-2);border-style:dashed"><div class="ic">${ic(dateMode?'calendar':'refresh',18)}</div><div class="grow"><div class="t">${dateMode?`Sadece ${DOW[sel.getDay()]} ${sel.getDate()} ${MON[sel.getMonth()]}`:`Her ${DOW[wd]} · tüm haftalar`}</div><div class="d">${dateMode?'Bu tarihe özel · diğer haftalar etkilenmez':'Haftalık şablon · tek gün için "Sadece…" seç'}</div></div>${dateMode&&hasOv(iso(sel))?`<button class="lesdel" onclick="clearOverride('${iso(sel)}')">${ic('refresh',15)}</button>`:''}</div>`;
+  <div class="modebar">
+    <span class="modelbl">Uygula</span>
+    <button class="mchip ${!dateMode?'on':''}" onclick="setAvMode('recurring')">Her ${DOW[wd]}</button>
+    <button class="mchip ${dateMode?'on':''}" onclick="setAvMode('date')">${sel.getDate()} ${MON[sel.getMonth()]}</button>
+    ${dateMode&&hasOv(iso(sel))?`<button class="mchip rev" onclick="clearOverride('${iso(sel)}')">${ic('refresh',14)}</button>`:''}
+  </div>
+  <div class="availhead"><span class="sect" style="margin:0">Ders saatleri</span><span class="availsum mono">${ranges.length?ranges.map(r=>`${hh(r[0])}–${hh(r[1])}`).join('  ·  '):'Kapalı'}</span></div>
+  <div class="hourgrid">${Array.from({length:17},(_,i)=>7+i).map(h=>`<div class="hourcell ${open.includes(h)?'on':''}" onclick="avToggle(${h})">${hh(h)}</div>`).join('')}</div>`;
 }
 function renderTrStudents(){ const list=studentsOf('t1');
   return `<div class="appbar"><div><div class="eyebrow">Ahmet Yılmaz</div><div class="h1">Öğrencilerim</div><div class="subline">Sana tanımlı ${list.length} öğrenci</div></div><div class="avatar">AY</div></div>
@@ -756,8 +772,9 @@ function renderAdminTrainers(){
   const picker=`<div class="sect" style="margin-top:2px">Hoca</div><div class="row" style="cursor:pointer" onclick="openTrPick()"><div class="mono-av">${trainer(T).initials}</div><div class="grow"><div class="t">${trainer(T).name}</div><div class="d">${TRAINERS.length} hoca · değiştirmek için dokun</div></div><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`;
   const rt=rateOf(T);
   const rateBlock=`<div class="sect">Pay oranı · <span style="color:var(--stop)">hoca görmez</span></div>
-    <div class="row"><div class="ic acc">${ic('chart',18)}</div><div class="grow"><div class="t mono">%${rt}</div><div class="d">Ders başı hakediş oranı · hakediş raporuna işler</div></div></div>
-    <div class="quickrow">${[40,45,50,55,60,70].map(n=>`<div class="quick ${rt===n?'on':''}" onclick="setRate('${T}',${n})">%${n}</div>`).join('')}</div>`;
+    <div class="card" style="padding:15px"><div class="field" style="margin:0"><label>Ders başı hakediş oranı (%)</label>
+      <input type="number" min="0" max="100" inputmode="numeric" value="${rt}" oninput="setRateLive('${T}',this.value)">
+      <span class="hint">Hakediş raporuna bu oran işler</span></div></div>`;
   const modes=`<div class="toggle"><button class="${!av?'on':''}" onclick="setAdminAvail(false)">Takvim</button><button class="${av?'on':''}" onclick="setAdminAvail(true)">Müsaitlik</button></div>`;
   return appbar+picker+rateBlock+modes+(av?availBody():agendaBody());
 }
