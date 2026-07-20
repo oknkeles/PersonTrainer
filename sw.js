@@ -1,4 +1,4 @@
-const CACHE = 'pt-studio-v11';
+const CACHE = 'pt-studio-v12';
 const ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', e => {

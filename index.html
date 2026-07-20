@@ -65,6 +65,9 @@
   .mchip.rev{ padding:8px 10px; display:inline-flex; color:var(--accent); }
   .availhead{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin:10px 1px 0; }
   .availsum{ font-size:12.5px; font-weight:650; color:var(--accent); text-align:right; }
+  .rateinp{ display:flex; align-items:center; gap:5px; flex:none; }
+  .rateinp input{ width:62px; text-align:right; padding:9px 8px; border-radius:10px; border:1px solid var(--hair); background:var(--surface-2); font-family:var(--mono); font-size:14.5px; font-weight:700; color:var(--ink); -webkit-appearance:none; appearance:none; }
+  .rateinp span{ font-size:13px; font-weight:700; color:var(--ink-3); }
 
   .card{ background:var(--surface); border:1px solid var(--hair); border-radius:18px; padding:16px; }
   /* inverted hero — architectural */
@@ -305,11 +308,13 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v7';
-const TRAINERS=[{id:'t1',name:'Ahmet Yılmaz',initials:'AY'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
+const KEY='pt_studio_v8';
+const BASE_TRAINERS=[{id:'t0',name:'Okan Keleş',initials:'OK',owner:true},
+  {id:'t1',name:'Ahmet Yılmaz',initials:'AY'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
   {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
   {id:'t6',name:'Kerem Su',initials:'KS'},{id:'t7',name:'Ayça Ün',initials:'AÜ'},{id:'t8',name:'Barış El',initials:'BE'},
   {id:'t9',name:'Ece Nar',initials:'EN'},{id:'t10',name:'Tolga Ay',initials:'TA'}];
+let TRAINERS=BASE_TRAINERS.map(t=>({...t}));
 const trainer=id=>TRAINERS.find(t=>t.id===id);
 const firstName=id=>trainer(id).name.split(' ')[0];
 
@@ -330,13 +335,13 @@ function seed(){
     mk('p7','Ceyda Nur','CN',['t2'],4,1,1,-8,22,1300),
     mk('p8','Kaan Tunç','KT',['t1','t2'],12,3,5,-15,75,1100),
     mk('p9','Naz Ak','NA',['t1','t4'],8,2,2,-12,48,1200),
-    mk('p10','Selin Ateş','SA',['t1'],10,3,3,-18,72,1200),
+    mk('p10','Selin Ateş','SA',['t1','t0'],10,3,3,-18,72,1200),
     mk('p11','Onur Kaya','OK',['t1'],8,2,5,-25,35,1100),
     mk('p12','Buse Er','BE',['t1','t2'],16,4,9,-35,85,1300),
     mk('p13','Cem Yıldırım','CY',['t1'],5,1,4,-14,16,1000),
     mk('p14','Derya Şen','DŞ',['t2'],12,3,2,-9,81,1250),
     mk('p15','Efe Doğan','ED',['t1'],10,2,10,-40,20,1150),
-    mk('p16','Gizem Ak','GA',['t1'],8,1,3,-6,24,1200),
+    mk('p16','Gizem Ak','GA',['t1','t0'],8,1,3,-6,24,1200),
     mk('p17','Halil Uz','HU',['t1','t2'],12,3,7,-28,62,1300),
     mk('p18','İpek Nar','İN',['t1'],4,1,1,-3,27,1100),
     mk('p19','Yusuf Tan','YT',['t1'],16,4,12,-30,90,1250),
@@ -351,6 +356,8 @@ function seed(){
   t1w[6]=rng(10,13); // cmt
   const availability={t1:t1w,t2:t2w};
   ['t3','t4','t5','t6','t7','t8','t9','t10'].forEach(id=>{ const w={}; [1,2,3,4,5].forEach(d=>{ w[d]=[...rng(10,13),...rng(17,21)]; }); availability[id]=w; });
+  const t0w={}; [1,2,3,4,5].forEach(d=>{ t0w[d]=[...rng(10,13),...rng(18,21)]; }); availability.t0=t0w;
+  const trs=BASE_TRAINERS.map(t=>({...t}));
   const plan=[
     [0,10,'Mehmet Barış','approved'],[0,18,'Emre Demir','approved'],[0,19,'Kaan Tunç','approved'],[0,20,'Naz Ak','approved'],
     [1,10,'Zeynep Kaya','approved'],[1,18,'Emre Demir','approved'],[1,19,'Rüya Yıldız','pending'],[1,20,'Kaan Tunç','approved'],
@@ -365,11 +372,12 @@ function seed(){
     ['t2',0,9,'Ceyda Nur'],['t2',1,10,'Ela Tan'],['t2',2,17,'Derya Şen'],['t2',3,18,'Buse Er'],['t2',4,9,'Kaan Tunç'],['t2',4,19,'Halil Uz'],
     ['t3',0,10,'Mehmet Barış'],['t3',2,11,'Deniz Kaya'],['t3',4,12,'Mehmet Barış'],
     ['t4',1,17,'Hakan Koç'],['t4',3,18,'Naz Ak'],
+    ['t0',0,10,'Selin Ateş'],['t0',2,18,'Gizem Ak'],['t0',4,11,'Selin Ateş'],
   ];
   extra.forEach(e=>{ const s=byName(e[3]);
     requests.push({id:'r'+(rid++),trainerId:e[0],studentId:s.id,studentName:s.name,initials:s.initials,dateISO:iso(addDays(monday,e[1])),hour:e[2],status:'approved'}); });
   requests.forEach(r=>{ const s=roster.find(x=>x.id===r.studentId); r.fee=(s&&s.pkg.lessons)?Math.round(s.pkg.price/s.pkg.lessons):0; });
-  const rates={}; TRAINERS.forEach(t=>rates[t.id]=50); rates.t1=55; rates.t2=45;
+  const rates={}; trs.forEach(t=>rates[t.id]=50); rates.t0=100; rates.t1=55; rates.t2=45;
   const log=[
     {dateISO:iso(addDays(now,-2)),trainer:'Ahmet H.',kind:'done',delta:-1},
     {dateISO:iso(addDays(now,-6)),trainer:'Ceren H.',kind:'done',delta:-1},
@@ -380,16 +388,19 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:'Ahmet Hoca · Salı 10:00',when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:'Ceren Hoca · onay bekliyor',when:'dün'},
   ];
-  return {v:7, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  return {v:8, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
     def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
-    roster, requests, availability, rates, log, notifs, mondayISO:iso(monday)};
+    formSheet:null, nt:{name:'',rate:50}, ns:{name:'',trainers:[],lessons:8,months:2,price:9600},
+    roster, requests, availability, rates, trainers:trs, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==7) S=seed(); }catch(e){ S=seed(); } }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==8) S=seed(); }catch(e){ S=seed(); }
+  if(!S.trainers||!S.trainers.length) S.trainers=BASE_TRAINERS.map(t=>({...t}));
+  TRAINERS=S.trainers; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
-function resetDemo(){ if(confirm('Demo verileri sıfırlansın mı?')){ S=seed(); save(); render(); toast('Sıfırlandı'); } }
+function resetDemo(){ if(confirm('Demo verileri sıfırlansın mı?')){ S=seed(); TRAINERS=S.trainers; save(); render(); toast('Sıfırlandı'); } }
 const me=()=>S.roster.find(r=>r.id===S.meId);
 const member=id=>S.roster.find(r=>r.id===id);
 
@@ -551,6 +562,7 @@ function render(){
   h+=addSheet();
   h+=lessonSheet();
   h+=trPickSheet();
+  h+=formSheet();
   $('app').className=(S.role==='admin'&&S.screen.admin==='reports')?'wide':'';
   $('app').innerHTML=h;
 }
@@ -757,26 +769,80 @@ function renderAdmin(){
   const sc=S.screen.admin;
   if(sc==='members') return renderMembers();
   if(sc==='trainers') return renderAdminTrainers();
-  if(sc==='panel'){ const g=monthData(0);
-    return `<div class="appbar"><div><div class="eyebrow">Yönetim</div><div class="h1">New U Sport Center</div><div class="subline">${S.roster.length} üye · ${TRAINERS.length} hoca</div></div><div class="avatar">NU</div></div>
-    <div class="stat2"><div class="stat"><div class="n">${S.roster.length}</div><div class="l">Aktif öğrenci</div></div><div class="stat"><div class="n">${TRAINERS.length}</div><div class="l">Hoca</div></div></div>
-    <div class="stat2"><div class="stat"><div class="n">${g.given}</div><div class="l">Bu ay ders</div></div><div class="stat"><div class="n" style="color:var(--stop)">${g.cancel}</div><div class="l">İptal</div></div></div>
-    <button class="btn" onclick="go('reports')">${ic('chart',18)} Raporları aç</button>
-    <button class="btn ghost sm" onclick="go('members')">Üye & paket yönetimi</button>`;
-  }
+  if(sc==='panel') return renderAdminPanel();
   return renderReports();
+}
+function renderAdminPanel(){
+  const pr=payroll(0); const cnt=id=>{ const x=pr.find(p=>p.id===id); return x?x.count:0; };
+  const totP=pr.reduce((a,r)=>a+r.pay,0);
+  return `<div class="appbar"><div><div class="eyebrow">Yönetim paneli</div><div class="h1">New U Sport Center</div><div class="subline">${S.roster.length} öğrenci · ${TRAINERS.length} hoca</div></div><div class="avatar">NU</div></div>
+  <div class="stat2"><div class="stat"><div class="n">${S.roster.length}</div><div class="l">Öğrenci</div></div><div class="stat"><div class="n">${TRAINERS.length}</div><div class="l">Hoca</div></div></div>
+  <div class="stat2"><div class="stat"><div class="n">${pr.reduce((a,r)=>a+r.count,0)}</div><div class="l">Bu ay ders</div></div><div class="stat"><div class="n money" style="color:var(--accent)">${tl(totP)}</div><div class="l">Bu ay hakediş</div></div></div>
+
+  <div class="sect">Hocalar · pay oranları</div>
+  <button class="btn ghost sm" onclick="openForm('trainer')">${ic('plus',16)} Yeni hoca tanımla</button>
+  ${TRAINERS.map(t=>`<div class="row"><div class="mono-av">${t.initials}</div>
+    <div class="grow"><div class="t">${t.name} ${t.owner?'<span class="tag mut">Sahip</span>':''}</div><div class="d mono">${cnt(t.id)} ders · bu ay</div></div>
+    <div class="rateinp"><input type="number" min="0" max="100" inputmode="numeric" value="${rateOf(t.id)}" oninput="setRateLive('${t.id}',this.value)"><span>%</span></div></div>`).join('')}
+  <div class="d" style="margin:2px 2px 0">Pay oranı yalnızca burada görünür · hocalar göremez</div>
+
+  <div class="sect">Öğrenciler</div>
+  <button class="btn ghost sm" onclick="openForm('student')">${ic('plus',16)} Yeni öğrenci tanımla</button>
+  <button class="btn ghost sm" onclick="go('members')">${ic('users',16)} Üye listesi & paketler</button>
+  <div class="sect">Raporlar</div>
+  <button class="btn" onclick="go('reports')">${ic('chart',18)} Hakediş & performans</button>`;
+}
+function openForm(t){ S.formSheet=t;
+  if(t==='trainer') S.nt={name:'',rate:50}; else S.ns={name:'',trainers:[],lessons:8,months:2,price:9600};
+  save(); render(); }
+function closeForm(){ S.formSheet=null; save(); render(); }
+function nsToggleTrainer(id){ const a=S.ns.trainers; const i=a.indexOf(id); if(i>=0)a.splice(i,1); else a.push(id); save(); render(); }
+function initialsOf(name){ return name.trim().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toLocaleUpperCase('tr'); }
+function addTrainer(){ const f=S.nt; const name=(f.name||'').trim();
+  if(name.length<2){ toast('Hoca adı gerekli'); return; }
+  const nums=TRAINERS.map(t=>parseInt(String(t.id).replace('t',''))||0);
+  const id='t'+(Math.max(0,...nums)+1);
+  TRAINERS.push({id,name,initials:initialsOf(name)});
+  S.rates=S.rates||{}; S.rates[id]=Math.max(0,Math.min(100,parseInt(f.rate)||50));
+  S.availability[id]={}; S.formSheet=null; save(); render();
+  toast(`${name} eklendi · müsaitliğini Hoca ekranından gir`); }
+function addStudent(){ const f=S.ns; const name=(f.name||'').trim();
+  if(name.length<2){ toast('Öğrenci adı gerekli'); return; }
+  if(!f.trainers.length){ toast('En az bir hoca seç'); return; }
+  const now=new Date(); now.setHours(12,0,0,0);
+  const lessons=Math.max(1,parseInt(f.lessons)||1), months=Math.max(1,parseInt(f.months)||1), price=Math.max(0,parseInt(f.price)||0);
+  S.roster.push({id:'s'+Date.now(),name,initials:initialsOf(name),trainers:[...f.trainers],
+    pkg:{lessons,months,used:0,price,startISO:iso(now),endISO:iso(addDays(now,months*30))}});
+  S.formSheet=null; save(); render(); toast(`${name} eklendi · ${lessons} ders / ${tl(price)}`); }
+function formSheet(){ if(!S.formSheet) return '';
+  if(S.formSheet==='trainer'){ const f=S.nt;
+    return `<div class="sheet-bg" onclick="if(event.target===this)closeForm()"><div class="sheet">
+      <div class="sheet-h"><div><div class="eyebrow">Yönetim</div><div class="h1">Yeni hoca</div></div><button class="sheet-x" onclick="closeForm()">${ic('x',18)}</button></div>
+      <div style="padding:0 16px 10px">
+        <div class="field"><label>Ad Soyad</label><input type="text" value="${(f.name||'').replace(/"/g,'&quot;')}" oninput="S.nt.name=this.value" placeholder="Örn. Elif Demir"></div>
+        <div class="field"><label>Pay oranı (%)</label><input type="number" min="0" max="100" inputmode="numeric" value="${f.rate}" oninput="S.nt.rate=this.value"><span class="hint">Ders başı hakediş oranı · hoca göremez</span></div>
+        <button class="btn" onclick="addTrainer()">${ic('check',18)} Hocayı Ekle</button>
+      </div></div></div>`;
+  }
+  const f=S.ns;
+  return `<div class="sheet-bg" onclick="if(event.target===this)closeForm()"><div class="sheet">
+    <div class="sheet-h"><div><div class="eyebrow">Yönetim</div><div class="h1">Yeni öğrenci</div></div><button class="sheet-x" onclick="closeForm()">${ic('x',18)}</button></div>
+    <div style="padding:0 16px 10px; overflow-y:auto">
+      <div class="field"><label>Ad Soyad</label><input type="text" value="${(f.name||'').replace(/"/g,'&quot;')}" oninput="S.ns.name=this.value" placeholder="Örn. Kemal Arslan"></div>
+      <div class="field"><label>Hoca(lar) · dokunarak seç</label>
+        <div class="days" style="padding-bottom:2px">${TRAINERS.map(t=>`<div class="day ${f.trainers.includes(t.id)?'on':''}" style="min-width:auto;padding:10px 12px" onclick="nsToggleTrainer('${t.id}')">${t.name.split(' ')[0]}</div>`).join('')}</div></div>
+      <div class="field"><label>Ders adedi</label><input type="number" min="1" inputmode="numeric" value="${f.lessons}" oninput="S.ns.lessons=this.value"></div>
+      <div class="field"><label>Süre (ay)</label><input type="number" min="1" inputmode="numeric" value="${f.months}" oninput="S.ns.months=this.value"></div>
+      <div class="field"><label>Paket ücreti (₺)</label><input type="number" min="0" inputmode="numeric" value="${f.price}" oninput="S.ns.price=this.value"><span class="hint">Ders başı ≈ ${tl(Math.round((parseInt(f.price)||0)/Math.max(1,parseInt(f.lessons)||1)))}</span></div>
+      <button class="btn" onclick="addStudent()">${ic('check',18)} Öğrenciyi Ekle</button>
+    </div></div></div>`;
 }
 function renderAdminTrainers(){
   const T=curTrainer(); const av=S.adminAvail;
   const appbar=`<div class="appbar"><div><div class="eyebrow">Hoca yönetimi · her hoca için</div><div class="h1">${trainer(T).name}</div><div class="subline">Takvimini yönet · ders sil/kaydır/ekle · onayla</div></div><div class="avatar">NU</div></div>`;
   const picker=`<div class="sect" style="margin-top:2px">Hoca</div><div class="row" style="cursor:pointer" onclick="openTrPick()"><div class="mono-av">${trainer(T).initials}</div><div class="grow"><div class="t">${trainer(T).name}</div><div class="d">${TRAINERS.length} hoca · değiştirmek için dokun</div></div><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`;
-  const rt=rateOf(T);
-  const rateBlock=`<div class="sect">Pay oranı · <span style="color:var(--stop)">hoca görmez</span></div>
-    <div class="card" style="padding:15px"><div class="field" style="margin:0"><label>Ders başı hakediş oranı (%)</label>
-      <input type="number" min="0" max="100" inputmode="numeric" value="${rt}" oninput="setRateLive('${T}',this.value)">
-      <span class="hint">Hakediş raporuna bu oran işler</span></div></div>`;
   const modes=`<div class="toggle"><button class="${!av?'on':''}" onclick="setAdminAvail(false)">Takvim</button><button class="${av?'on':''}" onclick="setAdminAvail(true)">Müsaitlik</button></div>`;
-  return appbar+picker+rateBlock+modes+(av?availBody():agendaBody());
+  return appbar+picker+modes+(av?availBody():agendaBody());
 }
 function setAdminTrainer(id){ S.adminTrainer=id; save(); render(); }
 function setAdminAvail(v){ S.adminAvail=v; save(); render(); }
@@ -788,7 +854,7 @@ function trPickListHTML(){ const q=(S.trPickSearch||'').toLocaleLowerCase('tr');
   const list=TRAINERS.filter(t=>t.name.toLocaleLowerCase('tr').includes(q));
   if(!list.length) return `<div class="empty">Eşleşen hoca yok</div>`;
   return list.map(t=>{ const cnt=S.requests.filter(r=>r.trainerId===t.id&&(r.status==='approved'||r.status==='pending')).length; const pend=pendingFor(t.id).length+changeReqs(t.id).length;
-    return `<div class="pickrow" style="cursor:pointer" onclick="pickTrainer('${t.id}')"><div class="mono-av ${t.id===cur?'':''}">${t.initials}</div><div class="grow"><div class="t">${t.name}</div><div class="d mono">${cnt} aktif ders${pend?` · ${pend} talep`:''}</div></div>${t.id===cur?`<span class="tag ok">Seçili</span>`:`<span style="color:var(--ink-3);display:flex">${ic('chevronR',16)}</span>`}</div>`; }).join(''); }
+    return `<div class="pickrow" style="cursor:pointer" onclick="pickTrainer('${t.id}')"><div class="mono-av">${t.initials}</div><div class="grow"><div class="t">${t.name} ${t.owner?'<span class="tag mut">Sahip</span>':''}</div><div class="d mono">${cnt} aktif ders${pend?` · ${pend} talep`:''}</div></div>${t.id===cur?`<span class="tag ok">Seçili</span>`:`<span style="color:var(--ink-3);display:flex">${ic('chevronR',16)}</span>`}</div>`; }).join(''); }
 function trPickSheet(){ if(!S.trPick) return '';
   return `<div class="sheet-bg" onclick="if(event.target===this)closeTrPick()"><div class="sheet">
     <div class="sheet-h"><div><div class="eyebrow">Yönetim</div><div class="h1">Hoca seç</div></div><button class="sheet-x" onclick="closeTrPick()">${ic('x',18)}</button></div>
