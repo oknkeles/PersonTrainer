@@ -157,6 +157,23 @@
   .mcell.today .dnum{ color:var(--ink); }
   .mcell .occ{ align-self:stretch; text-align:center; font-size:11px; font-weight:800; font-family:var(--mono); border-radius:5px; padding:1px 0; color:#fff; }
 
+  /* hakediş tablosu + masaüstü */
+  .tblwrap{ overflow-x:auto; }
+  .tbl{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .tbl th{ text-align:left; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); font-weight:700; padding:8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .tbl td{ padding:11px 8px; border-bottom:1px solid var(--line-soft); white-space:nowrap; }
+  .tbl .num{ text-align:right; font-family:var(--mono); }
+  .tbl tfoot td{ font-weight:800; border-top:1.5px solid var(--line); border-bottom:none; }
+  .csvbtn{ display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:var(--accent); background:var(--accent-soft); padding:6px 10px; border-radius:8px; letter-spacing:0; text-transform:none; }
+  .stat .n.money{ font-size:20px; }
+  @media (min-width:900px){
+    #app.wide{ max-width:1100px; }
+    #app.wide .content{ padding:6px 28px 60px; }
+    #app.wide .tabbar{ max-width:1100px; }
+    #app.wide .h1{ font-size:34px; }
+    #app.wide .stat .n.money{ font-size:26px; }
+  }
+
   .chart{ display:flex; align-items:flex-end; gap:9px; height:130px; padding:10px 2px 0; }
   .barcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; height:100%; justify-content:flex-end; }
   .barcol .stick{ width:100%; border-radius:5px 5px 0 0; background:var(--ink); }
@@ -271,7 +288,7 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v6';
+const KEY='pt_studio_v7';
 const TRAINERS=[{id:'t1',name:'Ahmet Yılmaz',initials:'AY'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
   {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
   {id:'t6',name:'Kerem Su',initials:'KS'},{id:'t7',name:'Ayça Ün',initials:'AÜ'},{id:'t8',name:'Barış El',initials:'BE'},
@@ -282,32 +299,32 @@ const firstName=id=>trainer(id).name.split(' ')[0];
 function seed(){
   const now=new Date(); now.setHours(12,0,0,0);
   const monday=addDays(now,(now.getDay()===0?-6:1-now.getDay()));
-  const mk=(id,name,init,trs,lessons,months,used,so,eo)=>({id,name,initials:init,trainers:trs,
-    pkg:{lessons,months,used,startISO:iso(addDays(now,so)),endISO:iso(addDays(now,eo))}});
+  const mk=(id,name,init,trs,lessons,months,used,so,eo,per)=>({id,name,initials:init,trainers:trs,
+    pkg:{lessons,months,used,price:lessons*per,startISO:iso(addDays(now,so)),endISO:iso(addDays(now,eo))}});
   const roster=[
-    mk('s1','Zeynep Kaya','ZK',['t1','t2'],12,3,4,-51,39),
-    mk('p0','Mehmet Barış','MB',['t1'],10,2,6,-30,30),
-    mk('p1','Ela Tan','ET',['t1','t2'],16,4,3,-20,100),
-    mk('p2','Rüya Yıldız','RY',['t1'],8,1,2,-10,20),
-    mk('p3','Deniz Kaya','DK',['t1'],5,1,1,-5,25),
-    mk('p4','Levent Mor','LM',['t1'],10,3,7,-40,50),
-    mk('p5','Emre Demir','EM',['t1'],8,1,8,-32,-2),
-    mk('p6','Hakan Koç','HK',['t1'],12,3,5,-22,68),
-    mk('p7','Ceyda Nur','CN',['t2'],4,1,1,-8,22),
-    mk('p8','Kaan Tunç','KT',['t1','t2'],12,3,5,-15,75),
-    mk('p9','Naz Ak','NA',['t1'],8,2,2,-12,48),
-    mk('p10','Selin Ateş','SA',['t1'],10,3,3,-18,72),
-    mk('p11','Onur Kaya','OK',['t1'],8,2,5,-25,35),
-    mk('p12','Buse Er','BE',['t1','t2'],16,4,9,-35,85),
-    mk('p13','Cem Yıldırım','CY',['t1'],5,1,4,-14,16),
-    mk('p14','Derya Şen','DŞ',['t2'],12,3,2,-9,81),
-    mk('p15','Efe Doğan','ED',['t1'],10,2,10,-40,20),
-    mk('p16','Gizem Ak','GA',['t1'],8,1,3,-6,24),
-    mk('p17','Halil Uz','HU',['t1','t2'],12,3,7,-28,62),
-    mk('p18','İpek Nar','İN',['t1'],4,1,1,-3,27),
-    mk('p19','Yusuf Tan','YT',['t1'],16,4,12,-30,90),
-    mk('p20','Aslı Kurt','AK',['t1'],10,3,6,-20,70),
-    mk('p21','Burak Öz','BÖ',['t2'],8,2,4,-16,44),
+    mk('s1','Zeynep Kaya','ZK',['t1','t2'],12,3,4,-51,39,1200),
+    mk('p0','Mehmet Barış','MB',['t1','t3'],10,2,6,-30,30,1100),
+    mk('p1','Ela Tan','ET',['t1','t2'],16,4,3,-20,100,1300),
+    mk('p2','Rüya Yıldız','RY',['t1'],8,1,2,-10,20,1100),
+    mk('p3','Deniz Kaya','DK',['t1','t3'],5,1,1,-5,25,1200),
+    mk('p4','Levent Mor','LM',['t1'],10,3,7,-40,50,1200),
+    mk('p5','Emre Demir','EM',['t1'],8,1,8,-32,-2,1000),
+    mk('p6','Hakan Koç','HK',['t1','t4'],12,3,5,-22,68,1200),
+    mk('p7','Ceyda Nur','CN',['t2'],4,1,1,-8,22,1300),
+    mk('p8','Kaan Tunç','KT',['t1','t2'],12,3,5,-15,75,1100),
+    mk('p9','Naz Ak','NA',['t1','t4'],8,2,2,-12,48,1200),
+    mk('p10','Selin Ateş','SA',['t1'],10,3,3,-18,72,1200),
+    mk('p11','Onur Kaya','OK',['t1'],8,2,5,-25,35,1100),
+    mk('p12','Buse Er','BE',['t1','t2'],16,4,9,-35,85,1300),
+    mk('p13','Cem Yıldırım','CY',['t1'],5,1,4,-14,16,1000),
+    mk('p14','Derya Şen','DŞ',['t2'],12,3,2,-9,81,1250),
+    mk('p15','Efe Doğan','ED',['t1'],10,2,10,-40,20,1150),
+    mk('p16','Gizem Ak','GA',['t1'],8,1,3,-6,24,1200),
+    mk('p17','Halil Uz','HU',['t1','t2'],12,3,7,-28,62,1300),
+    mk('p18','İpek Nar','İN',['t1'],4,1,1,-3,27,1100),
+    mk('p19','Yusuf Tan','YT',['t1'],16,4,12,-30,90,1250),
+    mk('p20','Aslı Kurt','AK',['t1'],10,3,6,-20,70,1200),
+    mk('p21','Burak Öz','BÖ',['t2'],8,2,4,-16,44,1150),
   ];
   const byName=n=>roster.find(r=>r.name===n);
   // müsaitlik: haftagünü -> açık saatler (başlangıç saatleri)
@@ -327,6 +344,15 @@ function seed(){
   ];
   let rid=1; const requests=plan.map(p=>{ const s=byName(p[2]);
     return {id:'r'+(rid++),trainerId:'t1',studentId:s.id,studentName:s.name,initials:s.initials,dateISO:iso(addDays(monday,p[0])),hour:p[1],status:p[3]}; });
+  const extra=[
+    ['t2',0,9,'Ceyda Nur'],['t2',1,10,'Ela Tan'],['t2',2,17,'Derya Şen'],['t2',3,18,'Buse Er'],['t2',4,9,'Kaan Tunç'],['t2',4,19,'Halil Uz'],
+    ['t3',0,10,'Mehmet Barış'],['t3',2,11,'Deniz Kaya'],['t3',4,12,'Mehmet Barış'],
+    ['t4',1,17,'Hakan Koç'],['t4',3,18,'Naz Ak'],
+  ];
+  extra.forEach(e=>{ const s=byName(e[3]);
+    requests.push({id:'r'+(rid++),trainerId:e[0],studentId:s.id,studentName:s.name,initials:s.initials,dateISO:iso(addDays(monday,e[1])),hour:e[2],status:'approved'}); });
+  requests.forEach(r=>{ const s=roster.find(x=>x.id===r.studentId); r.fee=(s&&s.pkg.lessons)?Math.round(s.pkg.price/s.pkg.lessons):0; });
+  const rates={}; TRAINERS.forEach(t=>rates[t.id]=50); rates.t1=55; rates.t2=45;
   const log=[
     {dateISO:iso(addDays(now,-2)),trainer:'Ahmet H.',kind:'done',delta:-1},
     {dateISO:iso(addDays(now,-6)),trainer:'Ceren H.',kind:'done',delta:-1},
@@ -337,14 +363,14 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:'Ahmet Hoca · Salı 10:00',when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:'Ceren Hoca · onay bekliyor',when:'dün'},
   ];
-  return {v:6, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  return {v:7, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
-    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
-    roster, requests, availability, log, notifs, mondayISO:iso(monday)};
+    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
+    roster, requests, availability, rates, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==6) S=seed(); }catch(e){ S=seed(); } }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==7) S=seed(); }catch(e){ S=seed(); } }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 function resetDemo(){ if(confirm('Demo verileri sıfırlansın mı?')){ S=seed(); save(); render(); toast('Sıfırlandı'); } }
 const me=()=>S.roster.find(r=>r.id===S.meId);
@@ -361,12 +387,35 @@ function freeHours(tId,d){ const taken=activeReqs(tId,iso(d)).map(r=>r.hour); re
 function pendingFor(tId){ return S.requests.filter(r=>r.trainerId===tId&&r.status==='pending'); }
 function studentsOf(tId){ return S.roster.filter(r=>r.trainers.includes(tId)); }
 const pkgEnded=p=>p.used>=p.lessons||daysLeft(p.endISO)===0;
+const tl=n=>Math.round(n||0).toLocaleString('tr-TR')+' ₺';
+const perLesson=p=>(p&&p.lessons)?Math.round((p.price||0)/p.lessons):0;
+const rateOf=id=>((S.rates||{})[id]!==undefined?S.rates[id]:50);
+function payroll(monthOff){
+  const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+monthOff);
+  const y=d.getFullYear(), m=d.getMonth();
+  const inMonth=r=>{ const dd=new Date(r.dateISO); return dd.getFullYear()===y&&dd.getMonth()===m; };
+  return TRAINERS.map(t=>{ const ls=S.requests.filter(r=>r.trainerId===t.id&&r.status==='approved'&&inMonth(r));
+    const gross=ls.reduce((a,r)=>a+(r.fee||0),0); const rate=rateOf(t.id);
+    return {id:t.id,name:t.name,initials:t.initials,count:ls.length,gross,rate,pay:Math.round(gross*rate/100)}; })
+    .filter(x=>x.count>0).sort((a,b)=>b.pay-a.pay);
+}
+function exportPayrollCSV(){
+  const rows=payroll(S.repMonth); const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+S.repMonth);
+  const head=['Hoca','Ders Adedi','Ciro (TL)','Pay Orani (%)','Odenecek (TL)'];
+  const lines=[head.join(';')].concat(rows.map(r=>[r.name,r.count,r.gross,r.rate,r.pay].join(';')));
+  lines.push(['TOPLAM',rows.reduce((a,r)=>a+r.count,0),rows.reduce((a,r)=>a+r.gross,0),'',rows.reduce((a,r)=>a+r.pay,0)].join(';'));
+  const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`hakedis-${MONF[d.getMonth()]}-${d.getFullYear()}.csv`; document.body.appendChild(a); a.click(); a.remove();
+  toast('CSV indirildi · Excel ile açabilirsin');
+}
+function setRate(id,v){ S.rates=S.rates||{}; S.rates[id]=Math.max(0,Math.min(100,parseInt(v)||0)); save(); render(); }
 
 function book(){
   const sel=bookWeek()[S.bookDayOffset]; const t=trainer(S.bookTrainer); const p=me().pkg;
   if(p.used>=p.lessons){ toast('Kotan dolu — talep açılamıyor'); return; }
   if(S.bookHour==null) return;
-  S.requests.push({id:'r'+Date.now(),trainerId:S.bookTrainer,studentId:S.meId,studentName:me().name,initials:me().initials,dateISO:iso(sel),hour:S.bookHour,status:'pending'});
+  S.requests.push({id:'r'+Date.now(),trainerId:S.bookTrainer,studentId:S.meId,studentName:me().name,initials:me().initials,dateISO:iso(sel),hour:S.bookHour,status:'pending',fee:perLesson(p)});
   S.notifs.unshift({icon:'clock',t:'Talebin alındı',d:`${t.name} · ${DOW[sel.getDay()]} ${hh(S.bookHour)}`,when:'şimdi'});
   S.bookHour=null; save(); S.screen.student='home'; render(); toast('Talep gönderildi · dilim kilitlendi');
 }
@@ -391,6 +440,16 @@ function avToggle(hr){ const T=curTrainer();
     const a=S.availOverrides[T][k]; const i=a.indexOf(hr); if(i>=0)a.splice(i,1); else a.push(hr);
   } else { const wd=S.availDay; S.availability[T]=S.availability[T]||{}; const a=(S.availability[T][wd]=S.availability[T][wd]||[]); const i=a.indexOf(hr); if(i>=0)a.splice(i,1); else a.push(hr); }
   save(); render(); }
+function avCur(){ const T=curTrainer(); return S.avMode==='date'?availHoursForDate(T,avSelDate()):availHours(T,S.availDay); }
+function avSet(hours){ const T=curTrainer(); const hs=[...new Set(hours)].sort((a,b)=>a-b);
+  if(S.avMode==='date'){ const d=avSelDate(); S.availOverrides=S.availOverrides||{}; S.availOverrides[T]=S.availOverrides[T]||{}; S.availOverrides[T][iso(d)]=hs; }
+  else { S.availability[T]=S.availability[T]||{}; S.availability[T][S.availDay]=hs; }
+  save(); render(); }
+function avPreset(a,b){ const cur=avCur(); const add=[]; for(let h=a;h<b;h++) add.push(h); avSet(cur.concat(add)); }
+function avClear(){ avSet([]); }
+function avApplyTo(days){ const T=curTrainer(); const src=avCur(); S.availability[T]=S.availability[T]||{};
+  days.forEach(d=>{ S.availability[T][d]=src.slice(); }); save(); render();
+  toast(days.length>5?'Tüm haftaya uygulandı':'Hafta içine uygulandı'); }
 function setAvMode(v){ S.avMode=v; save(); render(); }
 function clearOverride(k){ const T=curTrainer(); if(S.availOverrides&&S.availOverrides[T]) delete S.availOverrides[T][k]; save(); render(); toast('Bu tarih tekrar haftalık düzene döndü'); }
 function deleteLesson(rid){ const r=S.requests.find(x=>x.id===rid); if(!r) return; const s=member(r.studentId); const nm=s?s.name.split(' ')[0]:'Ders';
@@ -401,12 +460,12 @@ function deleteLesson(rid){ const r=S.requests.find(x=>x.id===rid); if(!r) retur
   save(); render(); toast(`${nm} · ${hh(r.hour)} silindi${wasApproved?' · hak iade edildi':''}`); }
 
 function defToggleTrainer(id){ const a=S.def.trainers; const i=a.indexOf(id); if(i>=0){ if(a.length>1)a.splice(i,1);} else a.push(id); save(); render(); }
-function defPickMember(id){ const m=member(id); S.def={memberId:id,trainers:[...m.trainers],lessons:m.pkg.lessons,months:m.pkg.months}; save(); render(); }
+function defPickMember(id){ const m=member(id); S.def={memberId:id,trainers:[...m.trainers],lessons:m.pkg.lessons,months:m.pkg.months,price:m.pkg.price||0}; save(); render(); }
 function defQuick(n){ S.def.lessons=n; save(); render(); }
 function defineSubmit(){ const m=member(S.def.memberId); const now=new Date(); now.setHours(12,0,0,0);
-  const lessons=Math.max(1,parseInt(S.def.lessons)||1), months=Math.max(1,parseInt(S.def.months)||1);
-  m.trainers=[...S.def.trainers]; m.pkg={lessons,months,used:0,startISO:iso(now),endISO:iso(addDays(now,months*30))};
-  save(); render(); toast(`${m.name.split(' ')[0]} · ${lessons} ders / ${months} ay tanımlandı`); }
+  const lessons=Math.max(1,parseInt(S.def.lessons)||1), months=Math.max(1,parseInt(S.def.months)||1), price=Math.max(0,parseInt(S.def.price)||0);
+  m.trainers=[...S.def.trainers]; m.pkg={lessons,months,used:0,price,startISO:iso(now),endISO:iso(addDays(now,months*30))};
+  save(); render(); toast(`${m.name.split(' ')[0]} · ${lessons} ders / ${months} ay · ${tl(price)}`); }
 
 /* yönetici arama */
 function filterMembers(v){ S.memberSearch=v; save(); const el=document.getElementById('memberList'); if(el) el.innerHTML=memberListHTML(); }
@@ -418,7 +477,7 @@ function memberCard(s){ const p=s.pkg; const e=pkgEnded(p); const trs=s.trainers
   return `<div class="row" style="cursor:pointer" onclick="openMember('${s.id}')"><div class="mono-av ${e?'stop':''}">${s.initials}</div>
     <div class="grow"><div class="t">${s.name}</div><div class="d mono">${p.used}/${p.lessons} ders · ${e?'kapandı':daysLeft(p.endISO)+' gün'} · ${trs}</div></div>
     <span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`; }
-function openMember(id){ S.adminMember=id; const m=member(id); S.def={memberId:id,trainers:[...m.trainers],lessons:m.pkg.lessons,months:m.pkg.months}; save(); render(); }
+function openMember(id){ S.adminMember=id; const m=member(id); S.def={memberId:id,trainers:[...m.trainers],lessons:m.pkg.lessons,months:m.pkg.months,price:m.pkg.price||0}; save(); render(); }
 function closeMember(){ S.adminMember=null; save(); render(); }
 
 /* hoca: boş saate öğrenci ekleme */
@@ -428,7 +487,7 @@ function filterAdd(v){ S.addSearch=v; const el=document.getElementById('addList'
 function addStudentToSlot(id){ const T=curTrainer(); const sel=trWeek()[S.dayOffset]; const s=member(id);
   if(s.pkg.used>=s.pkg.lessons){ toast(s.name.split(' ')[0]+' · kotası dolu'); return; }
   const hr=S.addSlot.hour;
-  S.requests.push({id:'r'+Date.now(),trainerId:T,studentId:id,studentName:s.name,initials:s.initials,dateISO:iso(sel),hour:hr,status:'approved'});
+  S.requests.push({id:'r'+Date.now(),trainerId:T,studentId:id,studentName:s.name,initials:s.initials,dateISO:iso(sel),hour:hr,status:'approved',fee:perLesson(s.pkg)});
   s.pkg.used++;
   S.notifs.unshift({icon:'calendar',t:'Derse eklendin',d:`${trainer(T).name} · ${DOW[sel.getDay()]} ${hh(hr)}`,when:'şimdi'});
   S.addSlot=null; save(); render(); toast(`${s.name.split(' ')[0]} · ${hh(hr)} eklendi · kotadan düşüldü`); }
@@ -474,6 +533,7 @@ function render(){
   h+=addSheet();
   h+=lessonSheet();
   h+=trPickSheet();
+  $('app').className=(S.role==='admin'&&S.screen.admin==='reports')?'wide':'';
   $('app').innerHTML=h;
 }
 
@@ -662,7 +722,11 @@ function availBody(){
   <div class="toggle" style="margin-top:2px"><button class="${!dateMode?'on':''}" onclick="setAvMode('recurring')">Her ${DOW[wd]}</button><button class="${dateMode?'on':''}" onclick="setAvMode('date')">Sadece ${sel.getDate()} ${MON[sel.getMonth()]}</button></div>
   <div class="sect">Açık saatler ${ranges.length?'':'· kapalı'}</div>
   ${ranges.length?`<div class="chips">${ranges.map(r=>`<span class="chip mono">${ic('clock',13)} ${hh(r[0])}–${hh(r[1])}</span>`).join('')}</div>`:''}
-  <div class="sect">Saatlere dokun · aç / kapat</div>
+  <div class="sect">Hızlı aralık ekle</div>
+  <div class="quickrow">${[[9,13],[10,14],[12,16],[17,21],[18,22],[9,22]].map(r=>`<div class="quick" onclick="avPreset(${r[0]},${r[1]})">${pad(r[0])}–${pad(r[1])}</div>`).join('')}<div class="quick" onclick="avClear()">Temizle</div></div>
+  ${!dateMode?`<div class="sect">Bu düzeni kopyala</div>
+  <div class="btnrow"><button class="btn ghost sm" onclick="avApplyTo([1,2,3,4,5])">${ic('refresh',16)} Hafta içi</button><button class="btn ghost sm" onclick="avApplyTo([1,2,3,4,5,6,0])">${ic('refresh',16)} Tüm hafta</button></div>`:''}
+  <div class="sect">İnce ayar · saate dokun</div>
   <div class="hourgrid">${Array.from({length:15},(_,i)=>8+i).map(h=>`<div class="hourcell ${open.includes(h)?'on':''}" onclick="avToggle(${h})">${hh(h)}</div>`).join('')}</div>
   <div class="row" style="background:var(--surface-2);border-style:dashed"><div class="ic">${ic(dateMode?'calendar':'refresh',18)}</div><div class="grow"><div class="t">${dateMode?`Sadece ${DOW[sel.getDay()]} ${sel.getDate()} ${MON[sel.getMonth()]}`:`Her ${DOW[wd]} · tüm haftalar`}</div><div class="d">${dateMode?'Bu tarihe özel · diğer haftalar etkilenmez':'Haftalık şablon · tek gün için "Sadece…" seç'}</div></div>${dateMode&&hasOv(iso(sel))?`<button class="lesdel" onclick="clearOverride('${iso(sel)}')">${ic('refresh',15)}</button>`:''}</div>`;
 }
@@ -690,8 +754,12 @@ function renderAdminTrainers(){
   const T=curTrainer(); const av=S.adminAvail;
   const appbar=`<div class="appbar"><div><div class="eyebrow">Hoca yönetimi · her hoca için</div><div class="h1">${trainer(T).name}</div><div class="subline">Takvimini yönet · ders sil/kaydır/ekle · onayla</div></div><div class="avatar">NU</div></div>`;
   const picker=`<div class="sect" style="margin-top:2px">Hoca</div><div class="row" style="cursor:pointer" onclick="openTrPick()"><div class="mono-av">${trainer(T).initials}</div><div class="grow"><div class="t">${trainer(T).name}</div><div class="d">${TRAINERS.length} hoca · değiştirmek için dokun</div></div><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`;
+  const rt=rateOf(T);
+  const rateBlock=`<div class="sect">Pay oranı · <span style="color:var(--stop)">hoca görmez</span></div>
+    <div class="row"><div class="ic acc">${ic('chart',18)}</div><div class="grow"><div class="t mono">%${rt}</div><div class="d">Ders başı hakediş oranı · hakediş raporuna işler</div></div></div>
+    <div class="quickrow">${[40,45,50,55,60,70].map(n=>`<div class="quick ${rt===n?'on':''}" onclick="setRate('${T}',${n})">%${n}</div>`).join('')}</div>`;
   const modes=`<div class="toggle"><button class="${!av?'on':''}" onclick="setAdminAvail(false)">Takvim</button><button class="${av?'on':''}" onclick="setAdminAvail(true)">Müsaitlik</button></div>`;
-  return appbar+picker+modes+(av?availBody():agendaBody());
+  return appbar+picker+rateBlock+modes+(av?availBody():agendaBody());
 }
 function setAdminTrainer(id){ S.adminTrainer=id; save(); render(); }
 function setAdminAvail(v){ S.adminAvail=v; save(); render(); }
@@ -712,6 +780,21 @@ function trPickSheet(){ if(!S.trPick) return '';
 function monthData(off){ const f=Math.max(.55,1+off*0.08);
   return {given:Math.round(312*f),cancel:Math.round(27*f),
     perTrainer:[['Ahmet',96],['Ceren',78],['Deniz',64],['Mert',44],['Sıla',30]].map(x=>[x[0],Math.round(x[1]*f)])}; }
+function payrollBlock(d){
+  const pr=payroll(S.repMonth);
+  const totC=pr.reduce((a,r)=>a+r.count,0), totG=pr.reduce((a,r)=>a+r.gross,0), totP=pr.reduce((a,r)=>a+r.pay,0);
+  return `<div class="stat2"><div class="stat"><div class="n money">${tl(totG)}</div><div class="l">Aylık ciro (verilen ders)</div></div>
+    <div class="stat"><div class="n money" style="color:var(--accent)">${tl(totP)}</div><div class="l">Hoca hakedişi</div></div></div>
+  <div class="card">
+    <div class="sect" style="margin:0 0 10px; display:flex; justify-content:space-between; align-items:center"><span>Hoca hakediş · ${MONF[d.getMonth()]}</span><button class="csvbtn" onclick="exportPayrollCSV()">${ic('chart',14)} Excel (CSV)</button></div>
+    ${pr.length?`<div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Hoca</th><th class="num">Ders</th><th class="num">Ciro</th><th class="num">Oran</th><th class="num">Ödenecek</th></tr></thead>
+      <tbody>${pr.map(r=>`<tr><td>${r.name}</td><td class="num">${r.count}</td><td class="num">${tl(r.gross)}</td><td class="num">%${r.rate}</td><td class="num" style="font-weight:800">${tl(r.pay)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>TOPLAM</td><td class="num">${totC}</td><td class="num">${tl(totG)}</td><td class="num"></td><td class="num">${tl(totP)}</td></tr></tfoot>
+    </table></div>`:`<div class="empty">Bu ayda verilen ders yok</div>`}
+    <div class="d" style="margin-top:10px">Ciro = ders başı paket ücreti × verilen ders · Ödenecek = ciro × hoca payı</div>
+  </div>`;
+}
 function renderReports(){
   const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+S.repMonth);
   const g=monthData(S.repMonth), max=Math.max(...g.perTrainer.map(x=>x[1]));
@@ -723,6 +806,7 @@ function renderReports(){
     <button class="navbtn" ${S.repMonth===0?'disabled':''} onclick="repMonthShift(1)">${ic('chevronR',20)}</button></div>
   <div class="stat2"><div class="stat"><div class="n">${g.given}</div><div class="l">Verilen ders</div><div class="tr up">▲ %14</div></div>
     <div class="stat"><div class="n">${g.cancel}</div><div class="l">İptal</div><div class="tr down">▲ %6</div></div></div>
+  ${payrollBlock(d)}
   <div class="card"><div class="sect" style="margin:0 0 2px">Hoca başına ders</div>
     <div class="chart">${g.perTrainer.map((x,i)=>`<div class="barcol"><span class="val">${x[1]}</span><span class="stick ${i>2?'dim':''}" style="height:${x[1]/max*100}%"></span><span class="lab">${x[0]}</span></div>`).join('')}</div></div>
   <div class="card"><div class="sect" style="margin:0 0 12px">En yoğun saatler</div>
@@ -740,6 +824,7 @@ function renderMemberDetail(id){
   <div class="stat2"><div class="stat"><div class="n" style="color:${e?'var(--stop)':'var(--accent)'}">${p.lessons-p.used}</div><div class="l">Kalan ders</div></div>
     <div class="stat"><div class="n">${daysLeft(p.endISO)}<span class="u"> gün</span></div><div class="l">Süre kaldı</div></div></div>
   <div class="row"><div class="ic">${ic('ticket',18)}</div><div class="grow"><div class="t mono">${p.lessons} ders · ${p.months} ay</div><div class="d">${fmtShort(p.startISO)} – ${fmtShort(p.endISO)} · ${p.used}/${p.lessons} kullanıldı</div></div><span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span></div>
+  <div class="row"><div class="ic acc">${ic('chart',18)}</div><div class="grow"><div class="t mono">${tl(p.price||0)}</div><div class="d">Ders başı ${tl(perLesson(p))} · hoca hakedişi bu tutardan hesaplanır</div></div></div>
   <div class="chips">${s.trainers.map(tid=>`<span class="chip">${ic('user',13)} ${trainer(tid).name}</span>`).join('')}</div>
   <div class="sect">Hızlı işlem</div>
   <div class="btnrow"><button class="btn ghost sm" onclick="extendMonths('${id}',1)">${ic('refresh',16)} Süre +1 Ay</button><button class="btn ghost sm" onclick="addLessons('${id}',4)">${ic('plus',16)} +4 Ders</button></div>
@@ -749,6 +834,7 @@ function renderMemberDetail(id){
     <div class="field"><label>Ders adedi</label><div class="quickrow" style="margin-bottom:9px">${[4,5,8,10,16].map(n=>`<div class="quick ${d.lessons==n?'on':''}" onclick="defQuick(${n})">${n}</div>`).join('')}</div>
       <input type="number" min="1" inputmode="numeric" value="${d.lessons}" oninput="S.def.lessons=this.value"><span class="hint">İstediğin sayıyı yaz — sabit değil</span></div>
     <div class="field"><label>Süre (ay)</label><input type="number" min="1" inputmode="numeric" value="${d.months}" oninput="S.def.months=this.value"><span class="hint">Yeni paket · kullanım sıfırlanır</span></div>
+    <div class="field"><label>Paket ücreti (₺)</label><input type="number" min="0" inputmode="numeric" value="${d.price||0}" oninput="S.def.price=this.value"><span class="hint">Ders başı ≈ ${tl(Math.round((parseInt(d.price)||0)/Math.max(1,parseInt(d.lessons)||1)))} · hoca hakedişi bundan hesaplanır</span></div>
     <button class="btn" onclick="defineSubmit()">${ic('check',18)} Paketi Tanımla</button>
   </div>`;
 }
