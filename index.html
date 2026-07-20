@@ -429,9 +429,9 @@ function payroll(monthOff){
 }
 function exportPayrollCSV(){
   const rows=payroll(S.repMonth); const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+S.repMonth);
-  const head=['Hoca','Ders Adedi','Ciro (TL)','Pay Orani (%)','Odenecek (TL)'];
-  const lines=[head.join(';')].concat(rows.map(r=>[r.name,r.count,r.gross,r.rate,r.pay].join(';')));
-  lines.push(['TOPLAM',rows.reduce((a,r)=>a+r.count,0),rows.reduce((a,r)=>a+r.gross,0),'',rows.reduce((a,r)=>a+r.pay,0)].join(';'));
+  const head=['Hoca','Ders Adedi','Ciro (TL)','Odenecek (TL)'];
+  const lines=[head.join(';')].concat(rows.map(r=>[r.name,r.count,r.gross,r.pay].join(';')));
+  lines.push(['TOPLAM',rows.reduce((a,r)=>a+r.count,0),rows.reduce((a,r)=>a+r.gross,0),rows.reduce((a,r)=>a+r.pay,0)].join(';'));
   const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`hakedis-${MONF[d.getMonth()]}-${d.getFullYear()}.csv`; document.body.appendChild(a); a.click(); a.remove();
@@ -563,7 +563,7 @@ function render(){
   h+=lessonSheet();
   h+=trPickSheet();
   h+=formSheet();
-  $('app').className=(S.role==='admin'&&S.screen.admin==='reports')?'wide':'';
+  $('app').className=(S.role==='admin'&&(S.screen.admin==='reports'||S.screen.admin==='payroll'))?'wide':'';
   $('app').innerHTML=h;
 }
 
@@ -769,6 +769,7 @@ function renderAdmin(){
   const sc=S.screen.admin;
   if(sc==='members') return renderMembers();
   if(sc==='trainers') return renderAdminTrainers();
+  if(sc==='payroll') return renderPayroll();
   if(sc==='panel') return renderAdminPanel();
   return renderReports();
 }
@@ -863,19 +864,24 @@ function trPickSheet(){ if(!S.trPick) return '';
 function monthData(off){ const f=Math.max(.55,1+off*0.08);
   return {given:Math.round(312*f),cancel:Math.round(27*f),
     perTrainer:[['Ahmet',96],['Ceren',78],['Deniz',64],['Mert',44],['Sıla',30]].map(x=>[x[0],Math.round(x[1]*f)])}; }
-function payrollBlock(d){
+function renderPayroll(){
+  const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+S.repMonth);
   const pr=payroll(S.repMonth);
   const totC=pr.reduce((a,r)=>a+r.count,0), totG=pr.reduce((a,r)=>a+r.gross,0), totP=pr.reduce((a,r)=>a+r.pay,0);
-  return `<div class="stat2"><div class="stat"><div class="n money">${tl(totG)}</div><div class="l">Aylık ciro (verilen ders)</div></div>
-    <div class="stat"><div class="n money" style="color:var(--accent)">${tl(totP)}</div><div class="l">Hoca hakedişi</div></div></div>
+  return `<div class="appbar"><div><button class="backbtn" onclick="go('reports')">${ic('chevronL',18)} Raporlar</button><div class="h1" style="margin-top:8px">Hakediş</div><div class="subline">Hoca ödemeleri · ${MONF[d.getMonth()]} ${d.getFullYear()}</div></div><div class="avatar">NU</div></div>
+  <div class="weeknav"><button class="navbtn" onclick="repMonthShift(-1)">${ic('chevronL',20)}</button>
+    <div class="wncenter"><div class="wnrange">${MONF[d.getMonth()]}</div><div class="wnmonth">${d.getFullYear()}</div></div>
+    <button class="navbtn" ${S.repMonth===0?'disabled':''} onclick="repMonthShift(1)">${ic('chevronR',20)}</button></div>
+  <div class="stat2"><div class="stat"><div class="n money">${tl(totG)}</div><div class="l">Aylık ciro</div></div>
+    <div class="stat"><div class="n money" style="color:var(--accent)">${tl(totP)}</div><div class="l">Ödenecek toplam</div></div></div>
   <div class="card">
-    <div class="sect" style="margin:0 0 10px; display:flex; justify-content:space-between; align-items:center"><span>Hoca hakediş · ${MONF[d.getMonth()]}</span><button class="csvbtn" onclick="exportPayrollCSV()">${ic('chart',14)} Excel (CSV)</button></div>
+    <div class="sect" style="margin:0 0 10px; display:flex; justify-content:space-between; align-items:center"><span>Hoca bazında</span><button class="csvbtn" onclick="exportPayrollCSV()">${ic('chart',14)} Excel (CSV)</button></div>
     ${pr.length?`<div class="tblwrap"><table class="tbl">
-      <thead><tr><th>Hoca</th><th class="num">Ders</th><th class="num">Ciro</th><th class="num">Oran</th><th class="num">Ödenecek</th></tr></thead>
-      <tbody>${pr.map(r=>`<tr><td>${r.name}</td><td class="num">${r.count}</td><td class="num">${tl(r.gross)}</td><td class="num">%${r.rate}</td><td class="num" style="font-weight:800">${tl(r.pay)}</td></tr>`).join('')}</tbody>
-      <tfoot><tr><td>TOPLAM</td><td class="num">${totC}</td><td class="num">${tl(totG)}</td><td class="num"></td><td class="num">${tl(totP)}</td></tr></tfoot>
+      <thead><tr><th>Hoca</th><th class="num">Ders</th><th class="num">Ciro</th><th class="num">Ödenecek</th></tr></thead>
+      <tbody>${pr.map(r=>`<tr><td>${r.name}</td><td class="num">${r.count}</td><td class="num">${tl(r.gross)}</td><td class="num" style="font-weight:800">${tl(r.pay)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>TOPLAM</td><td class="num">${totC}</td><td class="num">${tl(totG)}</td><td class="num">${tl(totP)}</td></tr></tfoot>
     </table></div>`:`<div class="empty">Bu ayda verilen ders yok</div>`}
-    <div class="d" style="margin-top:10px">Ciro = ders başı paket ücreti × verilen ders · Ödenecek = ciro × hoca payı</div>
+    <div class="d" style="margin-top:10px">Pay oranları Yönetim panelinde tanımlanır</div>
   </div>`;
 }
 function renderReports(){
@@ -889,11 +895,12 @@ function renderReports(){
     <button class="navbtn" ${S.repMonth===0?'disabled':''} onclick="repMonthShift(1)">${ic('chevronR',20)}</button></div>
   <div class="stat2"><div class="stat"><div class="n">${g.given}</div><div class="l">Verilen ders</div><div class="tr up">▲ %14</div></div>
     <div class="stat"><div class="n">${g.cancel}</div><div class="l">İptal</div><div class="tr down">▲ %6</div></div></div>
-  ${payrollBlock(d)}
   <div class="card"><div class="sect" style="margin:0 0 2px">Hoca başına ders</div>
     <div class="chart">${g.perTrainer.map((x,i)=>`<div class="barcol"><span class="val">${x[1]}</span><span class="stick ${i>2?'dim':''}" style="height:${x[1]/max*100}%"></span><span class="lab">${x[0]}</span></div>`).join('')}</div></div>
   <div class="card"><div class="sect" style="margin:0 0 12px">En yoğun saatler</div>
-    ${hs.map(x=>`<div class="lgrow" style="margin-bottom:12px"><span class="sw" style="background:var(--accent)"></span><div class="grow"><div class="rowspace"><span>${hh(x[0])}</span><span class="mono">${x[1]} ders</span></div><div class="track"><span style="width:${x[1]/hmax*100}%;background:var(--accent)"></span></div></div></div>`).join('')}</div>`;
+    ${hs.map(x=>`<div class="lgrow" style="margin-bottom:12px"><span class="sw" style="background:var(--accent)"></span><div class="grow"><div class="rowspace"><span>${hh(x[0])}</span><span class="mono">${x[1]} ders</span></div><div class="track"><span style="width:${x[1]/hmax*100}%;background:var(--accent)"></span></div></div></div>`).join('')}</div>
+  <div class="sect">Muhasebe</div>
+  <div class="row" style="cursor:pointer" onclick="go('payroll')"><div class="ic">${ic('ticket',18)}</div><div class="grow"><div class="t">Hakediş & ödeme raporu</div><div class="d">Hoca ödemeleri · Excel'e aktar</div></div><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`;
 }
 function renderMembers(){
   if(S.adminMember) return renderMemberDetail(S.adminMember);
@@ -929,7 +936,7 @@ function renderTabs(){
     trainer:[['agenda','calendar','Takvim'],['avail','slider','Müsaitlik'],['students','users','Öğrenci'],['notifs','bell','Bildirim']],
     admin:[['reports','chart','Rapor'],['members','users','Üye'],['trainers','calendar','Hoca'],['panel','building','Panel']] }[S.role];
   const cur=S.screen[S.role];
-  return `<div class="tabbar">${defs.map(x=>{ const on=cur===x[0];
+  return `<div class="tabbar">${defs.map(x=>{ const on=cur===x[0]||(x[0]==='reports'&&cur==='payroll');
     const badge=(S.role==='trainer'&&(x[0]==='notifs'||x[0]==='agenda')&&pend)?`<span class="badge">${pend}</span>`:(S.role==='admin'&&x[0]==='trainers'&&pendAll?`<span class="badge">${pendAll}</span>`:'');
     return `<button class="tb ${on?'on':''}" onclick="go('${x[0]}')">${ic(x[1],22)}<span>${x[2]}</span>${badge}</button>`; }).join('')}</div>`;
 }
