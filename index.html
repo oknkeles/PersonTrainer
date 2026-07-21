@@ -57,6 +57,38 @@
   .content{ flex:1; padding:6px 16px 118px; display:flex; flex-direction:column; gap:12px; }
   .sect{ font-size:10.5px; font-weight:700; letter-spacing:.15em; color:var(--ink-3); text-transform:uppercase; margin:10px 1px 1px; display:flex; align-items:center; justify-content:space-between; }
 
+  /* giriş / şifre ekranları */
+  #app.auth{ justify-content:center; }
+  .authwrap{ padding:calc(var(--safe-t) + 28px) 22px calc(var(--safe-b) + 28px); display:flex; flex-direction:column; justify-content:center; min-height:100vh; gap:22px; }
+  .authbrand{ text-align:center; }
+  .authbrand .mark{ width:56px; height:56px; border-radius:18px; background:var(--ink); color:var(--bg); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; margin:0 auto 14px; letter-spacing:-.03em; }
+  .authbrand .nm{ font-size:20px; font-weight:800; letter-spacing:-.03em; }
+  .authbrand .sb{ font-size:12.5px; color:var(--ink-3); margin-top:4px; font-weight:500; }
+  .authcard{ background:var(--surface); border:1px solid var(--hair); border-radius:22px; padding:22px; }
+  @media (prefers-color-scheme: light){ .authcard{ box-shadow:0 2px 4px rgba(16,17,22,.04), 0 24px 50px -30px rgba(16,17,22,.3); } }
+  .authcard h2{ font-size:22px; font-weight:800; letter-spacing:-.03em; margin:0 0 3px; }
+  .authcard .lead{ font-size:13px; color:var(--ink-2); margin:0 0 18px; font-weight:500; line-height:1.5; }
+  .autherr{ background:var(--stop-bg); color:var(--stop); border-radius:11px; padding:11px 13px; font-size:12.5px; font-weight:650; margin-bottom:13px; display:flex; align-items:center; gap:8px; }
+  .autherr svg{ width:16px; height:16px; flex:none; }
+  .demohint{ border:1px dashed var(--line); border-radius:14px; padding:13px; }
+  .demohint .dh{ font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin-bottom:9px; }
+  .demorow{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:7px 0; font-size:12.5px; }
+  .demorow .who{ color:var(--ink-2); font-weight:600; }
+  .demorow .num{ font-family:var(--mono); font-weight:700; color:var(--ink); }
+  .demorow button{ font-size:11px; font-weight:700; color:var(--accent); background:var(--accent-soft); padding:5px 9px; border-radius:7px; }
+
+  /* uygulama üst barı */
+  .topbar{ position:sticky; top:0; z-index:30; padding:calc(var(--safe-t) + 10px) 16px 11px; display:flex; align-items:center; gap:11px;
+    background:color-mix(in srgb,var(--bg) 88%,transparent); backdrop-filter:blur(16px); border-bottom:1px solid var(--hair); }
+  .tb-av{ width:38px; height:38px; border-radius:13px; background:var(--ink); color:var(--bg); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex:none; letter-spacing:-.02em; }
+  .tb-name{ font-size:14px; font-weight:700; letter-spacing:-.01em; line-height:1.2; }
+  .tb-role{ font-size:11px; color:var(--ink-3); font-weight:600; margin-top:2px; }
+  .tb-out{ width:38px; height:38px; border-radius:11px; background:var(--surface-2); border:1px solid var(--hair); color:var(--ink-2); display:flex; align-items:center; justify-content:center; flex:none; }
+  .tb-out svg{ width:18px; height:18px; }
+  .ownerseg{ display:flex; background:var(--surface-2); border:1px solid var(--hair); border-radius:11px; padding:3px; margin-left:auto; }
+  .ownerseg button{ padding:7px 12px; border-radius:8px; font-size:12px; font-weight:700; color:var(--ink-2); transition:.16s ease; }
+  .ownerseg button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.06); }
+
   /* müsaitlik: kompakt mod + saat havuzu */
   .modebar{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; padding:2px 1px; }
   .modelbl{ font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); }
@@ -303,12 +335,15 @@ const IP={
   arrowRight:'M5 12h13M13 6.5l5 5.5-5 5.5',
   building:'M5 21V5.5A1.5 1.5 0 0 1 6.5 4h6A1.5 1.5 0 0 1 14 5.5V21M14 21V10h3.5A1.5 1.5 0 0 1 19 11.5V21M3.5 21h17M8 8h3M8 12h3M8 16h3',
   search:'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14ZM20 20l-3.6-3.6',
-  trash:'M5 7.5h14M9.5 7.5V5.9A1.4 1.4 0 0 1 10.9 4.5h2.2A1.4 1.4 0 0 1 14.5 5.9V7.5M7.6 7.5l.6 11.1a1.3 1.3 0 0 0 1.3 1.2h5a1.3 1.3 0 0 0 1.3-1.2l.6-11.1'
+  trash:'M5 7.5h14M9.5 7.5V5.9A1.4 1.4 0 0 1 10.9 4.5h2.2A1.4 1.4 0 0 1 14.5 5.9V7.5M7.6 7.5l.6 11.1a1.3 1.3 0 0 0 1.3 1.2h5a1.3 1.3 0 0 0 1.3-1.2l.6-11.1',
+  logout:'M15.5 8.5V6.4A1.9 1.9 0 0 0 13.6 4.5H6.4A1.9 1.9 0 0 0 4.5 6.4v11.2a1.9 1.9 0 0 0 1.9 1.9h7.2a1.9 1.9 0 0 0 1.9-1.9V15.5M11 12h9M17 8.6l3.4 3.4L17 15.4',
+  phone:'M7.5 4.5h3l1.4 3.6-1.9 1.4a11 11 0 0 0 4.5 4.5l1.4-1.9 3.6 1.4v3a1.6 1.6 0 0 1-1.8 1.6C11.6 17.4 6.6 12.4 5.9 6.3A1.6 1.6 0 0 1 7.5 4.5Z',
+  alert:'M12 8.5v4.2M12 16.4h.02M12 4.6 3.6 19.2h16.8L12 4.6Z'
 };
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v8';
+const KEY='pt_studio_v9';
 const BASE_TRAINERS=[{id:'t0',name:'Okan Keleş',initials:'OK',owner:true},
   {id:'t1',name:'Ahmet Yılmaz',initials:'AY'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
   {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
@@ -378,6 +413,8 @@ function seed(){
     requests.push({id:'r'+(rid++),trainerId:e[0],studentId:s.id,studentName:s.name,initials:s.initials,dateISO:iso(addDays(monday,e[1])),hour:e[2],status:'approved'}); });
   requests.forEach(r=>{ const s=roster.find(x=>x.id===r.studentId); r.fee=(s&&s.pkg.lessons)?Math.round(s.pkg.price/s.pkg.lessons):0; });
   const rates={}; trs.forEach(t=>rates[t.id]=50); rates.t0=100; rates.t1=55; rates.t2=45;
+  trs.forEach((t,i)=>{ t.phone='0532 100 00 '+pad(i); t.pass='1234'; t.mustChange=!(t.owner||t.id==='t1'); });
+  roster.forEach((s,i)=>{ s.phone='0533 200 00 '+pad(i); s.pass='1234'; s.mustChange=(s.id!=='s1'); });
   const log=[
     {dateISO:iso(addDays(now,-2)),trainer:'Ahmet H.',kind:'done',delta:-1},
     {dateISO:iso(addDays(now,-6)),trainer:'Ceren H.',kind:'done',delta:-1},
@@ -388,19 +425,46 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:'Ahmet Hoca · Salı 10:00',when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:'Ceren Hoca · onay bekliyor',when:'dün'},
   ];
-  return {v:8, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  return {v:9, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
     def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
-    formSheet:null, nt:{name:'',rate:50}, ns:{name:'',trainers:[],lessons:8,months:2,price:9600},
+    formSheet:null, nt:{name:'',phone:'',pass:'1234',rate:50}, ns:{name:'',phone:'',pass:'1234',trainers:[],lessons:8,months:2,price:9600},
+    session:null, authForm:{phone:'',pass:'',err:''}, npForm:{p1:'',p2:'',err:''}, ownerView:'admin',
     roster, requests, availability, rates, trainers:trs, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==8) S=seed(); }catch(e){ S=seed(); }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==9) S=seed(); }catch(e){ S=seed(); }
   if(!S.trainers||!S.trainers.length) S.trainers=BASE_TRAINERS.map(t=>({...t}));
   TRAINERS=S.trainers; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 function resetDemo(){ if(confirm('Demo verileri sıfırlansın mı?')){ S=seed(); TRAINERS=S.trainers; save(); render(); toast('Sıfırlandı'); } }
+/* ---------- kimlik / oturum ---------- */
+function normPhone(p){ let d=String(p||'').replace(/\D/g,''); if(d.length>10&&d.startsWith('90')) d=d.slice(2); if(d.length>10&&d.startsWith('0')) d=d.slice(1); if(d.length===11&&d.startsWith('0')) d=d.slice(1); return d; }
+function fmtPhone(p){ const d=normPhone(p); if(d.length!==10) return p||''; return `0${d.slice(0,3)} ${d.slice(3,6)} ${d.slice(6,8)} ${d.slice(8)}`; }
+function findUser(phone){ const p=normPhone(phone); if(!p) return null;
+  const t=(S.trainers||[]).find(x=>normPhone(x.phone)===p); if(t) return {kind:t.owner?'admin':'trainer', id:t.id, rec:t};
+  const s=(S.roster||[]).find(x=>normPhone(x.phone)===p); if(s) return {kind:'student', id:s.id, rec:s};
+  return null; }
+function sessionUser(){ const s=S.session; if(!s) return null;
+  const rec=s.kind==='student'?S.roster.find(r=>r.id===s.id):(S.trainers||[]).find(t=>t.id===s.id);
+  return rec?{kind:s.kind,id:s.id,rec}:null; }
+function doLogin(){ const f=S.authForm; const u=findUser(f.phone);
+  if(!u){ f.err='Bu telefon numarası kayıtlı değil'; save(); render(); return; }
+  if(String(u.rec.pass||'')!==String(f.pass||'')){ f.err='Şifre hatalı'; save(); render(); return; }
+  S.session={id:u.id,kind:u.kind}; S.role=u.kind; if(u.kind==='student') S.meId=u.id;
+  if(u.kind==='admin'){ S.role='admin'; S.ownerView='admin'; }
+  f.err=''; f.pass=''; f.phone=''; S.npForm={p1:'',p2:'',err:''}; save(); render();
+  toast(`Hoş geldin, ${u.rec.name.split(' ')[0]}`); }
+function demoLogin(ph){ S.authForm.phone=ph; S.authForm.pass='1234'; doLogin(); }
+function logout(){ S.session=null; S.authForm={phone:'',pass:'',err:''}; save(); render(); }
+function doNewPass(){ const f=S.npForm; const u=sessionUser(); if(!u) return;
+  if(String(f.p1||'').length<4){ f.err='Şifre en az 4 karakter olmalı'; save(); render(); return; }
+  if(f.p1!==f.p2){ f.err='Şifreler eşleşmiyor'; save(); render(); return; }
+  u.rec.pass=f.p1; u.rec.mustChange=false; S.npForm={p1:'',p2:'',err:''};
+  save(); render(); toast('Şifren güncellendi'); }
+function setOwnerView(v){ S.ownerView=v; S.role=(v==='admin')?'admin':'trainer'; save(); render(); }
+
 const me=()=>S.roster.find(r=>r.id===S.meId);
 const member=id=>S.roster.find(r=>r.id===id);
 
@@ -508,6 +572,11 @@ function memberCard(s){ const p=s.pkg; const e=pkgEnded(p); const trs=s.trainers
     <span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`; }
 function openMember(id){ S.adminMember=id; const m=member(id); S.def={memberId:id,trainers:[...m.trainers],lessons:m.pkg.lessons,months:m.pkg.months,price:m.pkg.price||0}; save(); render(); }
 function closeMember(){ S.adminMember=null; save(); render(); }
+function resetPass(id){ const p=prompt('Yeni geçici şifre:','1234'); if(p===null) return;
+  if(String(p).length<4){ toast('En az 4 karakter'); return; }
+  const u=S.roster.find(r=>r.id===id)||(S.trainers||[]).find(t=>t.id===id); if(!u) return;
+  u.pass=String(p); u.mustChange=true; save(); render();
+  toast(`${u.name.split(' ')[0]} · geçici şifre: ${p}`); }
 
 /* hoca: boş saate öğrenci ekleme */
 function openAdd(h){ if(Date.now()-(window._dragJust||0)<400) return; S.addSlot={hour:h}; S.addSearch=''; save(); render(); }
@@ -553,10 +622,53 @@ function weekNav(dates,prevFn,nextFn,prevOff){
     <div class="wncenter"><div class="wnrange">${range}</div><div class="wnmonth">${MONF[a.getMonth()]} ${a.getFullYear()}</div></div>
     <button class="navbtn" onclick="${nextFn}">${ic('chevronR',20)}</button></div>`;
 }
+function renderLogin(){ const f=S.authForm||{};
+  const demo=[['Salon sahibi','Okan Keleş','0532 100 00 00'],['Hoca','Ahmet Yılmaz','0532 100 00 01'],['Öğrenci','Zeynep Kaya','0533 200 00 00']];
+  return `<div class="authwrap">
+    <div class="authbrand"><div class="mark">NU</div><div class="nm">New U Sport Center</div><div class="sb">Antrenman takip sistemi</div></div>
+    <div class="authcard">
+      <h2>Giriş yap</h2>
+      <p class="lead">Telefon numaran ve şifrenle gir. Şifreni salon yönetimi verir.</p>
+      ${f.err?`<div class="autherr">${ic('alert',16)} ${f.err}</div>`:''}
+      <div class="field"><label>Telefon numarası</label><input type="tel" inputmode="tel" placeholder="05xx xxx xx xx" value="${(f.phone||'').replace(/"/g,'&quot;')}" oninput="S.authForm.phone=this.value"></div>
+      <div class="field"><label>Şifre</label><input type="password" inputmode="numeric" placeholder="••••" value="${(f.pass||'').replace(/"/g,'&quot;')}" oninput="S.authForm.pass=this.value" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn" onclick="doLogin()">${ic('logout',18)} Giriş yap</button>
+    </div>
+    <div class="demohint"><div class="dh">Demo hesapları · şifre 1234</div>
+      ${demo.map(d=>`<div class="demorow"><span class="who">${d[0]}<br><span style="color:var(--ink-3);font-weight:500">${d[1]}</span></span><span class="num">${d[2]}</span><button onclick="demoLogin('${d[2]}')">Gir</button></div>`).join('')}
+    </div>
+  </div>`;
+}
+function renderNewPass(){ const u=sessionUser(); const f=S.npForm||{};
+  return `<div class="authwrap">
+    <div class="authbrand"><div class="mark">${u.rec.initials}</div><div class="nm">${u.rec.name}</div><div class="sb">İlk giriş · şifreni belirle</div></div>
+    <div class="authcard">
+      <h2>Yeni şifre</h2>
+      <p class="lead">Güvenliğin için geçici şifreni değiştirmen gerekiyor. Bundan sonra bu şifreyle gireceksin.</p>
+      ${f.err?`<div class="autherr">${ic('alert',16)} ${f.err}</div>`:''}
+      <div class="field"><label>Yeni şifre</label><input type="password" placeholder="En az 4 karakter" value="${(f.p1||'').replace(/"/g,'&quot;')}" oninput="S.npForm.p1=this.value"></div>
+      <div class="field"><label>Yeni şifre (tekrar)</label><input type="password" placeholder="••••" value="${(f.p2||'').replace(/"/g,'&quot;')}" oninput="S.npForm.p2=this.value" onkeydown="if(event.key==='Enter')doNewPass()"></div>
+      <button class="btn" onclick="doNewPass()">${ic('check',18)} Şifreyi Kaydet</button>
+      <button class="btn ghost sm" onclick="logout()" style="margin-top:9px">Çıkış yap</button>
+    </div>
+  </div>`;
+}
+function topbar(){ const u=sessionUser(); if(!u) return '';
+  const roleLbl={admin:'Salon sahibi',trainer:'Hoca',student:'Öğrenci'}[u.kind];
+  const owner=u.kind==='admin';
+  return `<div class="topbar">
+    <div class="tb-av">${u.rec.initials}</div>
+    <div style="min-width:0"><div class="tb-name">${u.rec.name}</div><div class="tb-role">${roleLbl}</div></div>
+    ${owner?`<div class="ownerseg"><button class="${S.ownerView!=='trainer'?'on':''}" onclick="setOwnerView('admin')">Yönetim</button><button class="${S.ownerView==='trainer'?'on':''}" onclick="setOwnerView('trainer')">Takvimim</button></div>`:'<span style="margin-left:auto"></span>'}
+    <button class="tb-out" onclick="logout()" title="Çıkış">${ic('logout',18)}</button>
+  </div>`;
+}
 function render(){
-  const titles={student:'Öğrenci',trainer:'Hoca',admin:'Salon Sahibi'};
-  let h=`<div class="demobar"><div class="demolbl"><span>Demo · rol seç</span><button class="reset" onclick="resetDemo()">${ic('refresh',13)} Sıfırla</button></div>
-    <div class="seg">${['student','trainer','admin'].map(r=>`<button class="${S.role===r?'on':''}" onclick="setRole('${r}')">${titles[r]}</button>`).join('')}</div></div>`;
+  if(!S.session){ $('app').className='auth'; $('app').innerHTML=renderLogin(); return; }
+  const u=sessionUser();
+  if(!u){ S.session=null; save(); $('app').className='auth'; $('app').innerHTML=renderLogin(); return; }
+  if(u.rec.mustChange){ $('app').className='auth'; $('app').innerHTML=renderNewPass(); return; }
+  let h=topbar();
   h+=`<div class="content fadein">`+(S.role==='student'?renderStudent():S.role==='trainer'?renderTrainer():renderAdmin())+`</div>`;
   h+=renderTabs();
   h+=addSheet();
@@ -661,13 +773,17 @@ function lessonSheet(){ if(!S.lessonSheet) return ''; const r=S.requests.find(x=
 }
 
 /* ===== HOCA (ve yönetici tüm hocalar için) ===== */
-function curTrainer(){ return S.role==='admin' ? (S.adminTrainer||'t1') : 't1'; }
+function curTrainer(){ const s=S.session;
+  if(!s) return 't1';
+  if(s.kind==='trainer') return s.id;
+  if(s.kind==='admin') return (S.ownerView==='trainer'&&S.role==='trainer')?s.id:(S.adminTrainer||'t1');
+  return 't1'; }
 function renderTrainer(){
-  const sc=S.screen.trainer;
-  const ab=(title,sub)=>`<div class="appbar"><div><div class="eyebrow">${trainer('t1').name}</div><div class="h1">${title}</div>${sub?`<div class="subline">${sub}</div>`:''}</div><div class="avatar">AY</div></div>`;
+  const sc=S.screen.trainer; const T=curTrainer(); const tr=trainer(T)||{name:'',initials:''};
+  const ab=(title,sub)=>`<div class="appbar"><div><div class="eyebrow">${tr.name}</div><div class="h1">${title}</div>${sub?`<div class="subline">${sub}</div>`:''}</div><div class="avatar">${tr.initials}</div></div>`;
   if(sc==='avail') return ab('Müsaitlik','Gün seç, ders vereceğin saatleri aç')+availBody();
   if(sc==='students') return renderTrStudents();
-  if(sc==='notifs'){ const pend=pendingFor('t1');
+  if(sc==='notifs'){ const pend=pendingFor(T);
     return ab('Bildirimler')+`<div class="sect">Onay bekleyen</div>${pend.length?pend.map(pendCard).join(''):`<div class="empty">Bekleyen talep yok</div>`}`; }
   return ab('Takvim')+agendaBody();
 }
@@ -758,8 +874,8 @@ function availBody(){
   <div class="availhead"><span class="sect" style="margin:0">Ders saatleri</span><span class="availsum mono">${ranges.length?ranges.map(r=>`${hh(r[0])}–${hh(r[1])}`).join('  ·  '):'Kapalı'}</span></div>
   <div class="hourgrid">${Array.from({length:17},(_,i)=>7+i).map(h=>`<div class="hourcell ${open.includes(h)?'on':''}" onclick="avToggle(${h})">${hh(h)}</div>`).join('')}</div>`;
 }
-function renderTrStudents(){ const list=studentsOf('t1');
-  return `<div class="appbar"><div><div class="eyebrow">Ahmet Yılmaz</div><div class="h1">Öğrencilerim</div><div class="subline">Sana tanımlı ${list.length} öğrenci</div></div><div class="avatar">AY</div></div>
+function renderTrStudents(){ const T=curTrainer(); const tr=trainer(T)||{name:'',initials:''}; const list=studentsOf(T);
+  return `<div class="appbar"><div><div class="eyebrow">${tr.name}</div><div class="h1">Öğrencilerim</div><div class="subline">Sana tanımlı ${list.length} öğrenci</div></div><div class="avatar">${tr.initials}</div></div>
   <div class="row" style="background:var(--surface-2)"><div class="ic acc">${ic('lock',18)}</div><div class="grow"><div class="t">Yalnızca sana tanımlı üyeler</div><div class="d">Diğer hocaların öğrencileri görünmez</div></div></div>
   ${list.map(s=>{ const p=s.pkg; const e=pkgEnded(p); return `<div class="row"><div class="mono-av ${e?'stop':''}">${s.initials}</div><div class="grow"><div class="t">${s.name}</div><div class="d mono">${p.lessons-p.used}/${p.lessons} ders · ${daysLeft(p.endISO)} gün</div></div><span class="tag ${e?'stop':'ok'}">${e?'Doldu':'Aktif'}</span></div>`; }).join('')}`;
 }
@@ -783,7 +899,7 @@ function renderAdminPanel(){
   <div class="sect">Hocalar · pay oranları</div>
   <button class="btn ghost sm" onclick="openForm('trainer')">${ic('plus',16)} Yeni hoca tanımla</button>
   ${TRAINERS.map(t=>`<div class="row"><div class="mono-av">${t.initials}</div>
-    <div class="grow"><div class="t">${t.name} ${t.owner?'<span class="tag mut">Sahip</span>':''}</div><div class="d mono">${cnt(t.id)} ders · bu ay</div></div>
+    <div class="grow"><div class="t">${t.name} ${t.owner?'<span class="tag mut">Sahip</span>':''}${t.mustChange?'<span class="tag wait">İlk giriş</span>':''}</div><div class="d mono">${fmtPhone(t.phone)} · ${cnt(t.id)} ders</div></div>
     <div class="rateinp"><input type="number" min="0" max="100" inputmode="numeric" value="${rateOf(t.id)}" oninput="setRateLive('${t.id}',this.value)"><span>%</span></div></div>`).join('')}
   <div class="d" style="margin:2px 2px 0">Pay oranı yalnızca burada görünür · hocalar göremez</div>
 
@@ -794,33 +910,42 @@ function renderAdminPanel(){
   <button class="btn" onclick="go('reports')">${ic('chart',18)} Hakediş & performans</button>`;
 }
 function openForm(t){ S.formSheet=t;
-  if(t==='trainer') S.nt={name:'',rate:50}; else S.ns={name:'',trainers:[],lessons:8,months:2,price:9600};
+  if(t==='trainer') S.nt={name:'',phone:'',pass:'1234',rate:50}; else S.ns={name:'',phone:'',pass:'1234',trainers:[],lessons:8,months:2,price:9600};
   save(); render(); }
 function closeForm(){ S.formSheet=null; save(); render(); }
 function nsToggleTrainer(id){ const a=S.ns.trainers; const i=a.indexOf(id); if(i>=0)a.splice(i,1); else a.push(id); save(); render(); }
 function initialsOf(name){ return name.trim().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toLocaleUpperCase('tr'); }
+function phoneTaken(ph){ const p=normPhone(ph); return (S.trainers||[]).some(t=>normPhone(t.phone)===p)||(S.roster||[]).some(s=>normPhone(s.phone)===p); }
 function addTrainer(){ const f=S.nt; const name=(f.name||'').trim();
   if(name.length<2){ toast('Hoca adı gerekli'); return; }
+  if(normPhone(f.phone).length!==10){ toast('Geçerli telefon gir (05xx xxx xx xx)'); return; }
+  if(phoneTaken(f.phone)){ toast('Bu numara zaten kayıtlı'); return; }
+  if(String(f.pass||'').length<4){ toast('Geçici şifre en az 4 karakter'); return; }
   const nums=TRAINERS.map(t=>parseInt(String(t.id).replace('t',''))||0);
   const id='t'+(Math.max(0,...nums)+1);
-  TRAINERS.push({id,name,initials:initialsOf(name)});
+  TRAINERS.push({id,name,initials:initialsOf(name),phone:fmtPhone(f.phone),pass:String(f.pass),mustChange:true});
   S.rates=S.rates||{}; S.rates[id]=Math.max(0,Math.min(100,parseInt(f.rate)||50));
   S.availability[id]={}; S.formSheet=null; save(); render();
-  toast(`${name} eklendi · müsaitliğini Hoca ekranından gir`); }
+  toast(`${name} eklendi · geçici şifre: ${f.pass}`); }
 function addStudent(){ const f=S.ns; const name=(f.name||'').trim();
   if(name.length<2){ toast('Öğrenci adı gerekli'); return; }
+  if(normPhone(f.phone).length!==10){ toast('Geçerli telefon gir (05xx xxx xx xx)'); return; }
+  if(phoneTaken(f.phone)){ toast('Bu numara zaten kayıtlı'); return; }
+  if(String(f.pass||'').length<4){ toast('Geçici şifre en az 4 karakter'); return; }
   if(!f.trainers.length){ toast('En az bir hoca seç'); return; }
   const now=new Date(); now.setHours(12,0,0,0);
   const lessons=Math.max(1,parseInt(f.lessons)||1), months=Math.max(1,parseInt(f.months)||1), price=Math.max(0,parseInt(f.price)||0);
-  S.roster.push({id:'s'+Date.now(),name,initials:initialsOf(name),trainers:[...f.trainers],
+  S.roster.push({id:'s'+Date.now(),name,initials:initialsOf(name),phone:fmtPhone(f.phone),pass:String(f.pass),mustChange:true,trainers:[...f.trainers],
     pkg:{lessons,months,used:0,price,startISO:iso(now),endISO:iso(addDays(now,months*30))}});
-  S.formSheet=null; save(); render(); toast(`${name} eklendi · ${lessons} ders / ${tl(price)}`); }
+  S.formSheet=null; save(); render(); toast(`${name} eklendi · geçici şifre: ${f.pass}`); }
 function formSheet(){ if(!S.formSheet) return '';
   if(S.formSheet==='trainer'){ const f=S.nt;
     return `<div class="sheet-bg" onclick="if(event.target===this)closeForm()"><div class="sheet">
       <div class="sheet-h"><div><div class="eyebrow">Yönetim</div><div class="h1">Yeni hoca</div></div><button class="sheet-x" onclick="closeForm()">${ic('x',18)}</button></div>
       <div style="padding:0 16px 10px">
         <div class="field"><label>Ad Soyad</label><input type="text" value="${(f.name||'').replace(/"/g,'&quot;')}" oninput="S.nt.name=this.value" placeholder="Örn. Elif Demir"></div>
+        <div class="field"><label>Telefon numarası</label><input type="tel" inputmode="tel" value="${(f.phone||'').replace(/"/g,'&quot;')}" oninput="S.nt.phone=this.value" placeholder="05xx xxx xx xx"><span class="hint">Giriş anahtarı · ileride SMS bildirimleri buraya gider</span></div>
+        <div class="field"><label>Geçici şifre</label><input type="text" value="${(f.pass||'').replace(/"/g,'&quot;')}" oninput="S.nt.pass=this.value"><span class="hint">Hocaya ilet · ilk girişte kendi şifresini belirleyecek</span></div>
         <div class="field"><label>Pay oranı (%)</label><input type="number" min="0" max="100" inputmode="numeric" value="${f.rate}" oninput="S.nt.rate=this.value"><span class="hint">Ders başı hakediş oranı · hoca göremez</span></div>
         <button class="btn" onclick="addTrainer()">${ic('check',18)} Hocayı Ekle</button>
       </div></div></div>`;
@@ -830,6 +955,8 @@ function formSheet(){ if(!S.formSheet) return '';
     <div class="sheet-h"><div><div class="eyebrow">Yönetim</div><div class="h1">Yeni öğrenci</div></div><button class="sheet-x" onclick="closeForm()">${ic('x',18)}</button></div>
     <div style="padding:0 16px 10px; overflow-y:auto">
       <div class="field"><label>Ad Soyad</label><input type="text" value="${(f.name||'').replace(/"/g,'&quot;')}" oninput="S.ns.name=this.value" placeholder="Örn. Kemal Arslan"></div>
+      <div class="field"><label>Telefon numarası</label><input type="tel" inputmode="tel" value="${(f.phone||'').replace(/"/g,'&quot;')}" oninput="S.ns.phone=this.value" placeholder="05xx xxx xx xx"><span class="hint">Giriş anahtarı · ileride SMS bildirimleri buraya gider</span></div>
+      <div class="field"><label>Geçici şifre</label><input type="text" value="${(f.pass||'').replace(/"/g,'&quot;')}" oninput="S.ns.pass=this.value"><span class="hint">Öğrenciye ilet · ilk girişte kendi şifresini belirleyecek</span></div>
       <div class="field"><label>Hoca(lar) · dokunarak seç</label>
         <div class="days" style="padding-bottom:2px">${TRAINERS.map(t=>`<div class="day ${f.trainers.includes(t.id)?'on':''}" style="min-width:auto;padding:10px 12px" onclick="nsToggleTrainer('${t.id}')">${t.name.split(' ')[0]}</div>`).join('')}</div></div>
       <div class="field"><label>Ders adedi</label><input type="number" min="1" inputmode="numeric" value="${f.lessons}" oninput="S.ns.lessons=this.value"></div>
@@ -915,6 +1042,7 @@ function renderMemberDetail(id){
     <div class="stat"><div class="n">${daysLeft(p.endISO)}<span class="u"> gün</span></div><div class="l">Süre kaldı</div></div></div>
   <div class="row"><div class="ic">${ic('ticket',18)}</div><div class="grow"><div class="t mono">${p.lessons} ders · ${p.months} ay</div><div class="d">${fmtShort(p.startISO)} – ${fmtShort(p.endISO)} · ${p.used}/${p.lessons} kullanıldı</div></div><span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span></div>
   <div class="row"><div class="ic acc">${ic('chart',18)}</div><div class="grow"><div class="t mono">${tl(p.price||0)}</div><div class="d">Ders başı ${tl(perLesson(p))} · hoca hakedişi bu tutardan hesaplanır</div></div></div>
+  <div class="row"><div class="ic">${ic('phone',18)}</div><div class="grow"><div class="t mono">${fmtPhone(s.phone)||'—'}</div><div class="d">Giriş anahtarı${s.mustChange?' · ilk giriş bekleniyor':''}</div></div><button class="btn ghost sm" style="width:auto;padding:9px 12px" onclick="resetPass('${s.id}')">Şifre sıfırla</button></div>
   <div class="chips">${s.trainers.map(tid=>`<span class="chip">${ic('user',13)} ${trainer(tid).name}</span>`).join('')}</div>
   <div class="sect">Hızlı işlem</div>
   <div class="btnrow"><button class="btn ghost sm" onclick="extendMonths('${id}',1)">${ic('refresh',16)} Süre +1 Ay</button><button class="btn ghost sm" onclick="addLessons('${id}',4)">${ic('plus',16)} +4 Ders</button></div>
@@ -931,7 +1059,7 @@ function renderMemberDetail(id){
 
 /* ===== TABBAR ===== */
 function renderTabs(){
-  const pend=pendingFor('t1').length+changeReqs('t1').length; const pendAll=S.requests.filter(r=>r.status==='pending'||(r.status==='approved'&&r.pending2)).length;
+  const pend=pendingFor(curTrainer()).length+changeReqs(curTrainer()).length; const pendAll=S.requests.filter(r=>r.status==='pending'||(r.status==='approved'&&r.pending2)).length;
   const defs={ student:[['home','home','Ana'],['book','calendar','Ders Al'],['package','ticket','Paket'],['notifs','bell','Bildirim']],
     trainer:[['agenda','calendar','Takvim'],['avail','slider','Müsaitlik'],['students','users','Öğrenci'],['notifs','bell','Bildirim']],
     admin:[['reports','chart','Rapor'],['members','users','Üye'],['trainers','calendar','Hoca'],['panel','building','Panel']] }[S.role];
