@@ -343,9 +343,9 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v9';
-const BASE_TRAINERS=[{id:'t0',name:'Okan Keleş',initials:'OK',owner:true},
-  {id:'t1',name:'Ahmet Yılmaz',initials:'AY'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
+const KEY='pt_studio_v10';
+const BASE_TRAINERS=[{id:'t0',name:'Ramazan Haktan Tatar',initials:'RT',owner:true},
+  {id:'t1',name:'Burak Hoca',initials:'BH'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
   {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
   {id:'t6',name:'Kerem Su',initials:'KS'},{id:'t7',name:'Ayça Ün',initials:'AÜ'},{id:'t8',name:'Barış El',initials:'BE'},
   {id:'t9',name:'Ece Nar',initials:'EN'},{id:'t10',name:'Tolga Ay',initials:'TA'}];
@@ -415,6 +415,9 @@ function seed(){
   const rates={}; trs.forEach(t=>rates[t.id]=50); rates.t0=100; rates.t1=55; rates.t2=45;
   trs.forEach((t,i)=>{ t.phone='0532 100 00 '+pad(i); t.pass='1234'; t.mustChange=!(t.owner||t.id==='t1'); });
   roster.forEach((s,i)=>{ s.phone='0533 200 00 '+pad(i); s.pass='1234'; s.mustChange=(s.id!=='s1'); });
+  const own=trs.find(t=>t.id==='t0'); own.phone='0530 649 21 03'; own.pass='Aura2026'; own.mustChange=false;
+  const brk=trs.find(t=>t.id==='t1'); brk.phone='0530 378 98 84'; brk.pass='Haktan2026'; brk.mustChange=false;
+  const zk=roster.find(r=>r.id==='s1'); zk.phone='1234'; zk.pass='1234'; zk.mustChange=false;
   const log=[
     {dateISO:iso(addDays(now,-2)),trainer:'Ahmet H.',kind:'done',delta:-1},
     {dateISO:iso(addDays(now,-6)),trainer:'Ceren H.',kind:'done',delta:-1},
@@ -425,7 +428,7 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:'Ahmet Hoca · Salı 10:00',when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:'Ceren Hoca · onay bekliyor',when:'dün'},
   ];
-  return {v:9, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  return {v:10, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
     def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
@@ -434,7 +437,7 @@ function seed(){
     roster, requests, availability, rates, trainers:trs, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==9) S=seed(); }catch(e){ S=seed(); }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==10) S=seed(); }catch(e){ S=seed(); }
   if(!S.trainers||!S.trainers.length) S.trainers=BASE_TRAINERS.map(t=>({...t}));
   TRAINERS=S.trainers; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
@@ -456,7 +459,6 @@ function doLogin(){ const f=S.authForm; const u=findUser(f.phone);
   if(u.kind==='admin'){ S.role='admin'; S.ownerView='admin'; }
   f.err=''; f.pass=''; f.phone=''; S.npForm={p1:'',p2:'',err:''}; save(); render();
   toast(`Hoş geldin, ${u.rec.name.split(' ')[0]}`); }
-function demoLogin(ph){ S.authForm.phone=ph; S.authForm.pass='1234'; doLogin(); }
 function logout(){ S.session=null; S.authForm={phone:'',pass:'',err:''}; save(); render(); }
 function doNewPass(){ const f=S.npForm; const u=sessionUser(); if(!u) return;
   if(String(f.p1||'').length<4){ f.err='Şifre en az 4 karakter olmalı'; save(); render(); return; }
@@ -623,7 +625,6 @@ function weekNav(dates,prevFn,nextFn,prevOff){
     <button class="navbtn" onclick="${nextFn}">${ic('chevronR',20)}</button></div>`;
 }
 function renderLogin(){ const f=S.authForm||{};
-  const demo=[['Salon sahibi','Okan Keleş','0532 100 00 00'],['Hoca','Ahmet Yılmaz','0532 100 00 01'],['Öğrenci','Zeynep Kaya','0533 200 00 00']];
   return `<div class="authwrap">
     <div class="authbrand"><div class="mark">NU</div><div class="nm">New U Sport Center</div><div class="sb">Antrenman takip sistemi</div></div>
     <div class="authcard">
@@ -633,9 +634,6 @@ function renderLogin(){ const f=S.authForm||{};
       <div class="field"><label>Telefon numarası</label><input type="tel" inputmode="tel" placeholder="05xx xxx xx xx" value="${(f.phone||'').replace(/"/g,'&quot;')}" oninput="S.authForm.phone=this.value"></div>
       <div class="field"><label>Şifre</label><input type="password" inputmode="numeric" placeholder="••••" value="${(f.pass||'').replace(/"/g,'&quot;')}" oninput="S.authForm.pass=this.value" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn" onclick="doLogin()">${ic('logout',18)} Giriş yap</button>
-    </div>
-    <div class="demohint"><div class="dh">Demo hesapları · şifre 1234</div>
-      ${demo.map(d=>`<div class="demorow"><span class="who">${d[0]}<br><span style="color:var(--ink-3);font-weight:500">${d[1]}</span></span><span class="num">${d[2]}</span><button onclick="demoLogin('${d[2]}')">Gir</button></div>`).join('')}
     </div>
   </div>`;
 }
@@ -988,9 +986,6 @@ function trPickSheet(){ if(!S.trPick) return '';
     <div class="sheet-h"><div><div class="eyebrow">Yönetim</div><div class="h1">Hoca seç</div></div><button class="sheet-x" onclick="closeTrPick()">${ic('x',18)}</button></div>
     <div class="searchbar">${ic('search',18)}<input placeholder="Hoca ara…" oninput="filterTrPick(this.value)"></div>
     <div class="sheet-list" id="trPickList">${trPickListHTML()}</div></div></div>`; }
-function monthData(off){ const f=Math.max(.55,1+off*0.08);
-  return {given:Math.round(312*f),cancel:Math.round(27*f),
-    perTrainer:[['Ahmet',96],['Ceren',78],['Deniz',64],['Mert',44],['Sıla',30]].map(x=>[x[0],Math.round(x[1]*f)])}; }
 function renderPayroll(){
   const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+S.repMonth);
   const pr=payroll(S.repMonth);
@@ -1013,17 +1008,19 @@ function renderPayroll(){
 }
 function renderReports(){
   const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+S.repMonth);
-  const g=monthData(S.repMonth), max=Math.max(...g.perTrainer.map(x=>x[1]));
+  const pr=payroll(S.repMonth); const top=pr.slice(0,5); const max=Math.max(1,...top.map(x=>x.count));
+  const inM=r=>{ const dd=new Date(r.dateISO); return dd.getFullYear()===d.getFullYear()&&dd.getMonth()===d.getMonth(); };
+  const g={given:pr.reduce((a,r)=>a+r.count,0), cancel:S.requests.filter(r=>r.status==='cancelled'&&inM(r)).length};
   const counts={}; S.requests.filter(x=>x.status==='approved'||x.status==='pending').forEach(x=>counts[x.hour]=(counts[x.hour]||0)+1);
   const hs=Object.entries(counts).map(([h,c])=>[+h,c]).sort((a,b)=>b[1]-a[1]).slice(0,5); const hmax=Math.max(1,...hs.map(x=>x[1]));
   return `<div class="appbar"><div><div class="eyebrow">Raporlar</div><div class="h1">Performans</div></div><div class="avatar">NU</div></div>
   <div class="weeknav"><button class="navbtn" onclick="repMonthShift(-1)">${ic('chevronL',20)}</button>
     <div class="wncenter"><div class="wnrange">${MONF[d.getMonth()]}</div><div class="wnmonth">${d.getFullYear()}</div></div>
     <button class="navbtn" ${S.repMonth===0?'disabled':''} onclick="repMonthShift(1)">${ic('chevronR',20)}</button></div>
-  <div class="stat2"><div class="stat"><div class="n">${g.given}</div><div class="l">Verilen ders</div><div class="tr up">▲ %14</div></div>
-    <div class="stat"><div class="n">${g.cancel}</div><div class="l">İptal</div><div class="tr down">▲ %6</div></div></div>
+  <div class="stat2"><div class="stat"><div class="n">${g.given}</div><div class="l">Verilen ders</div></div>
+    <div class="stat"><div class="n">${g.cancel}</div><div class="l">İptal</div></div></div>
   <div class="card"><div class="sect" style="margin:0 0 2px">Hoca başına ders</div>
-    <div class="chart">${g.perTrainer.map((x,i)=>`<div class="barcol"><span class="val">${x[1]}</span><span class="stick ${i>2?'dim':''}" style="height:${x[1]/max*100}%"></span><span class="lab">${x[0]}</span></div>`).join('')}</div></div>
+    ${top.length?`<div class="chart">${top.map((x,i)=>`<div class="barcol"><span class="val">${x.count}</span><span class="stick ${i>2?'dim':''}" style="height:${x.count/max*100}%"></span><span class="lab">${x.name.split(' ')[0]}</span></div>`).join('')}</div>`:`<div class="empty">Bu ayda ders yok</div>`}</div>
   <div class="card"><div class="sect" style="margin:0 0 12px">En yoğun saatler</div>
     ${hs.map(x=>`<div class="lgrow" style="margin-bottom:12px"><span class="sw" style="background:var(--accent)"></span><div class="grow"><div class="rowspace"><span>${hh(x[0])}</span><span class="mono">${x[1]} ders</span></div><div class="track"><span style="width:${x[1]/hmax*100}%;background:var(--accent)"></span></div></div></div>`).join('')}</div>
   <div class="sect">Muhasebe</div>
