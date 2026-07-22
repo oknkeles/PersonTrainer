@@ -343,7 +343,7 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v10';
+const KEY='pt_studio_v11';
 const BASE_TRAINERS=[{id:'t0',name:'Ramazan Haktan Tatar',initials:'RT',owner:true},
   {id:'t1',name:'Burak Hoca',initials:'BH'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
   {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
@@ -418,6 +418,11 @@ function seed(){
   const own=trs.find(t=>t.id==='t0'); own.phone='0530 649 21 03'; own.pass='Aura2026'; own.mustChange=false;
   const brk=trs.find(t=>t.id==='t1'); brk.phone='0530 378 98 84'; brk.pass='Haktan2026'; brk.mustChange=false;
   const zk=roster.find(r=>r.id==='s1'); zk.phone='1234'; zk.pass='1234'; zk.mustChange=false;
+  // öğrenci bazlı pay oranı: varsayılan hocanın oranı, bazılarında özel
+  roster.forEach(s=>{ s.trainerRates={}; s.trainers.forEach(id=>{ s.trainerRates[id]=rates[id]; }); });
+  zk.trainerRates.t1=60; const et=roster.find(r=>r.id==='p1'); if(et) et.trainerRates.t1=40;
+  const hk=roster.find(r=>r.id==='p6'); if(hk) hk.trainerRates.t1=65;
+  requests.forEach(r=>{ const s=roster.find(x=>x.id===r.studentId); r.rate=(s&&s.trainerRates&&s.trainerRates[r.trainerId]!==undefined)?s.trainerRates[r.trainerId]:(rates[r.trainerId]||50); });
   const log=[
     {dateISO:iso(addDays(now,-2)),trainer:'Ahmet H.',kind:'done',delta:-1},
     {dateISO:iso(addDays(now,-6)),trainer:'Ceren H.',kind:'done',delta:-1},
@@ -428,16 +433,16 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:'Ahmet Hoca · Salı 10:00',when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:'Ceren Hoca · onay bekliyor',when:'dün'},
   ];
-  return {v:10, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  return {v:11, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
     def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
-    formSheet:null, nt:{name:'',phone:'',pass:'1234',rate:50}, ns:{name:'',phone:'',pass:'1234',trainers:[],lessons:8,months:2,price:9600},
+    formSheet:null, nt:{name:'',phone:'',pass:'1234',rate:50}, ns:{name:'',phone:'',pass:'1234',trainers:[],rates:{},lessons:8,months:2,price:9600}, outbox:[],
     session:null, authForm:{phone:'',pass:'',err:''}, npForm:{p1:'',p2:'',err:''}, ownerView:'admin',
     roster, requests, availability, rates, trainers:trs, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==10) S=seed(); }catch(e){ S=seed(); }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==11) S=seed(); }catch(e){ S=seed(); }
   if(!S.trainers||!S.trainers.length) S.trainers=BASE_TRAINERS.map(t=>({...t}));
   TRAINERS=S.trainers; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
@@ -484,20 +489,43 @@ const pkgEnded=p=>p.used>=p.lessons||daysLeft(p.endISO)===0;
 const tl=n=>Math.round(n||0).toLocaleString('tr-TR')+' ₺';
 const perLesson=p=>(p&&p.lessons)?Math.round((p.price||0)/p.lessons):0;
 const rateOf=id=>((S.rates||{})[id]!==undefined?S.rates[id]:50);
+/* öğrenci bazlı pay oranı: öğrenciye özel tanım varsa o, yoksa hocanın varsayılanı */
+function rateFor(s,tId){ if(s&&s.trainerRates&&s.trainerRates[tId]!==undefined) return s.trainerRates[tId]; return rateOf(tId); }
+function reqRate(r){ if(r.rate!==undefined) return r.rate; return rateFor(member(r.studentId),r.trainerId); }
+const reqPay=r=>Math.round((r.fee||0)*reqRate(r)/100);
+/* iptal eşiği: dersin başlamasına 12 saatten az kaldıysa hak yanar */
+const LATE_H=12;
+function lessonAt(r){ const d=new Date(String(r.dateISO)+'T00:00:00'); d.setHours(r.hour||0,0,0,0); return d; }
+function hoursUntil(r){ return (lessonAt(r)-new Date())/36e5; }
+function isLate(r){ return hoursUntil(r)<LATE_H; }
+/* WhatsApp kuyruğu — backend gelince buradan gerçek API'ye bağlanacak */
+function queueWA(phone,text,meta){ S.outbox=S.outbox||[];
+  S.outbox.unshift({id:'w'+Date.now()+Math.random().toString(36).slice(2,6),phone:fmtPhone(phone),text,kind:(meta&&meta.kind)||'bilgi',at:new Date().toISOString(),status:'pending'});
+  if(S.outbox.length>60) S.outbox.length=60; }
+function waStudent(sid,text,kind){ const s=member(sid); if(s&&s.phone) queueWA(s.phone,text,{kind}); }
+
 function payroll(monthOff){
   const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+monthOff);
   const y=d.getFullYear(), m=d.getMonth();
-  const inMonth=r=>{ const dd=new Date(r.dateISO); return dd.getFullYear()===y&&dd.getMonth()===m; };
-  return TRAINERS.map(t=>{ const ls=S.requests.filter(r=>r.trainerId===t.id&&r.status==='approved'&&inMonth(r));
-    const gross=ls.reduce((a,r)=>a+(r.fee||0),0); const rate=rateOf(t.id);
-    return {id:t.id,name:t.name,initials:t.initials,count:ls.length,gross,rate,pay:Math.round(gross*rate/100)}; })
-    .filter(x=>x.count>0).sort((a,b)=>b.pay-a.pay);
+  const inMonth=r=>{ const dd=new Date(String(r.dateISO)+'T00:00:00'); return dd.getFullYear()===y&&dd.getMonth()===m; };
+  return TRAINERS.map(t=>{
+    const ls=S.requests.filter(r=>r.trainerId===t.id&&r.status==='approved'&&inMonth(r));
+    // hak yanarak iptal edilenler: salon parayı kazandı, ders yapılmadı
+    const burned=S.requests.filter(r=>r.trainerId===t.id&&r.status==='cancelled'&&r.burned&&inMonth(r));
+    const gross=ls.reduce((a,r)=>a+(r.fee||0),0);
+    const pay=ls.reduce((a,r)=>a+reqPay(r),0);
+    const burnedGross=burned.reduce((a,r)=>a+(r.fee||0),0);
+    return {id:t.id,name:t.name,initials:t.initials,count:ls.length,gross,pay,
+      burnedCount:burned.length,burnedGross}; })
+    .filter(x=>x.count>0||x.burnedCount>0).sort((a,b)=>b.pay-a.pay);
 }
 function exportPayrollCSV(){
   const rows=payroll(S.repMonth); const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+S.repMonth);
-  const head=['Hoca','Ders Adedi','Ciro (TL)','Odenecek (TL)'];
-  const lines=[head.join(';')].concat(rows.map(r=>[r.name,r.count,r.gross,r.pay].join(';')));
-  lines.push(['TOPLAM',rows.reduce((a,r)=>a+r.count,0),rows.reduce((a,r)=>a+r.gross,0),rows.reduce((a,r)=>a+r.pay,0)].join(';'));
+  const head=['Hoca','Ders Saati','Iptal (hak yanan)','Ders Cirosu (TL)','Yanan Ciro (TL)','Toplam Ciro (TL)','Odenecek (TL)'];
+  const lines=[head.join(';')].concat(rows.map(r=>[r.name,r.count,r.burnedCount,r.gross,r.burnedGross,r.gross+r.burnedGross,r.pay].join(';')));
+  lines.push(['TOPLAM',rows.reduce((a,r)=>a+r.count,0),rows.reduce((a,r)=>a+r.burnedCount,0),
+    rows.reduce((a,r)=>a+r.gross,0),rows.reduce((a,r)=>a+r.burnedGross,0),
+    rows.reduce((a,r)=>a+r.gross+r.burnedGross,0),rows.reduce((a,r)=>a+r.pay,0)].join(';'));
   const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`hakedis-${MONF[d.getMonth()]}-${d.getFullYear()}.csv`; document.body.appendChild(a); a.click(); a.remove();
@@ -510,13 +538,14 @@ function book(){
   const sel=bookWeek()[S.bookDayOffset]; const t=trainer(S.bookTrainer); const p=me().pkg;
   if(p.used>=p.lessons){ toast('Kotan dolu — talep açılamıyor'); return; }
   if(S.bookHour==null) return;
-  S.requests.push({id:'r'+Date.now(),trainerId:S.bookTrainer,studentId:S.meId,studentName:me().name,initials:me().initials,dateISO:iso(sel),hour:S.bookHour,status:'pending',fee:perLesson(p)});
+  S.requests.push({id:'r'+Date.now(),trainerId:S.bookTrainer,studentId:S.meId,studentName:me().name,initials:me().initials,dateISO:iso(sel),hour:S.bookHour,status:'pending',fee:perLesson(p),rate:rateFor(me(),S.bookTrainer)});
   S.notifs.unshift({icon:'clock',t:'Talebin alındı',d:`${t.name} · ${DOW[sel.getDay()]} ${hh(S.bookHour)}`,when:'şimdi'});
   S.bookHour=null; save(); S.screen.student='home'; render(); toast('Talep gönderildi · dilim kilitlendi');
 }
 function approve(id){ const r=S.requests.find(x=>x.id===id); if(!r)return; r.status='approved'; const s=member(r.studentId);
   s.pkg.used=Math.min(s.pkg.lessons,s.pkg.used+1);
   if(s.id===S.meId) S.notifs.unshift({icon:'check',t:'Dersin onaylandı',d:`${trainer(r.trainerId).name} · ${hh(r.hour)}`,when:'şimdi'});
+  waStudent(r.studentId,`Sayın ${s.name}, ${trainer(r.trainerId).name} ile ${DOW[new Date(r.dateISO).getDay()]} ${fmtShort(r.dateISO)} saat ${hh(r.hour)} dersiniz tanımlanmıştır. Kalan ders hakkınız: ${s.pkg.lessons-s.pkg.used}.`,'onay');
   save(); render(); toast('Onaylandı · kotadan düşüldü'); }
 function reject(id){ const r=S.requests.find(x=>x.id===id); if(!r)return; r.status='rejected';
   if(r.studentId===S.meId) S.notifs.unshift({icon:'x',t:'Talebin reddedildi',d:`${trainer(r.trainerId).name} · dilim tekrar açıldı`,when:'şimdi'});
@@ -554,12 +583,17 @@ function deleteLesson(rid){ const r=S.requests.find(x=>x.id===rid); if(!r) retur
   S.notifs.unshift({icon:'x',t:'Dersin iptal edildi',d:`${firstName(r.trainerId)} Hoca · ${DOW[new Date(r.dateISO).getDay()]} ${hh(r.hour)}`,when:'şimdi'});
   save(); render(); toast(`${nm} · ${hh(r.hour)} silindi${wasApproved?' · hak iade edildi':''}`); }
 
-function defToggleTrainer(id){ const a=S.def.trainers; const i=a.indexOf(id); if(i>=0){ if(a.length>1)a.splice(i,1);} else a.push(id); save(); render(); }
-function defPickMember(id){ const m=member(id); S.def={memberId:id,trainers:[...m.trainers],lessons:m.pkg.lessons,months:m.pkg.months,price:m.pkg.price||0}; save(); render(); }
+function defToggleTrainer(id){ const a=S.def.trainers; const i=a.indexOf(id);
+  if(i>=0){ if(a.length>1)a.splice(i,1); } else { a.push(id); S.def.rates=S.def.rates||{}; if(S.def.rates[id]===undefined) S.def.rates[id]=rateOf(id); }
+  save(); render(); }
+function defSetRate(id,v){ S.def.rates=S.def.rates||{}; S.def.rates[id]=Math.max(0,Math.min(100,parseInt(v)||0)); save(); }
+function defPickMember(id){ const m=member(id); S.def={memberId:id,trainers:[...m.trainers],rates:{...(m.trainerRates||{})},lessons:m.pkg.lessons,months:m.pkg.months,price:m.pkg.price||0}; save(); render(); }
 function defQuick(n){ S.def.lessons=n; save(); render(); }
 function defineSubmit(){ const m=member(S.def.memberId); const now=new Date(); now.setHours(12,0,0,0);
   const lessons=Math.max(1,parseInt(S.def.lessons)||1), months=Math.max(1,parseInt(S.def.months)||1), price=Math.max(0,parseInt(S.def.price)||0);
-  m.trainers=[...S.def.trainers]; m.pkg={lessons,months,used:0,price,startISO:iso(now),endISO:iso(addDays(now,months*30))};
+  m.trainers=[...S.def.trainers];
+  m.trainerRates={}; m.trainers.forEach(id=>{ const v=(S.def.rates||{})[id]; m.trainerRates[id]=(v!==undefined?Math.max(0,Math.min(100,parseInt(v)||0)):rateOf(id)); });
+  m.pkg={lessons,months,used:0,price,startISO:iso(now),endISO:iso(addDays(now,months*30))};
   save(); render(); toast(`${m.name.split(' ')[0]} · ${lessons} ders / ${months} ay · ${tl(price)}`); }
 
 /* yönetici arama */
@@ -572,7 +606,7 @@ function memberCard(s){ const p=s.pkg; const e=pkgEnded(p); const trs=s.trainers
   return `<div class="row" style="cursor:pointer" onclick="openMember('${s.id}')"><div class="mono-av ${e?'stop':''}">${s.initials}</div>
     <div class="grow"><div class="t">${s.name}</div><div class="d mono">${p.used}/${p.lessons} ders · ${e?'kapandı':daysLeft(p.endISO)+' gün'} · ${trs}</div></div>
     <span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`; }
-function openMember(id){ S.adminMember=id; const m=member(id); S.def={memberId:id,trainers:[...m.trainers],lessons:m.pkg.lessons,months:m.pkg.months,price:m.pkg.price||0}; save(); render(); }
+function openMember(id){ S.adminMember=id; const m=member(id); S.def={memberId:id,trainers:[...m.trainers],rates:{...(m.trainerRates||{})},lessons:m.pkg.lessons,months:m.pkg.months,price:m.pkg.price||0}; save(); render(); }
 function closeMember(){ S.adminMember=null; save(); render(); }
 function resetPass(id){ const p=prompt('Yeni geçici şifre:','1234'); if(p===null) return;
   if(String(p).length<4){ toast('En az 4 karakter'); return; }
@@ -587,9 +621,10 @@ function filterAdd(v){ S.addSearch=v; const el=document.getElementById('addList'
 function addStudentToSlot(id){ const T=curTrainer(); const sel=trWeek()[S.dayOffset]; const s=member(id);
   if(s.pkg.used>=s.pkg.lessons){ toast(s.name.split(' ')[0]+' · kotası dolu'); return; }
   const hr=S.addSlot.hour;
-  S.requests.push({id:'r'+Date.now(),trainerId:T,studentId:id,studentName:s.name,initials:s.initials,dateISO:iso(sel),hour:hr,status:'approved',fee:perLesson(s.pkg)});
+  S.requests.push({id:'r'+Date.now(),trainerId:T,studentId:id,studentName:s.name,initials:s.initials,dateISO:iso(sel),hour:hr,status:'approved',fee:perLesson(s.pkg),rate:rateFor(s,T)});
   s.pkg.used++;
   S.notifs.unshift({icon:'calendar',t:'Derse eklendin',d:`${trainer(T).name} · ${DOW[sel.getDay()]} ${hh(hr)}`,when:'şimdi'});
+  waStudent(id,`Sayın ${s.name}, ${trainer(T).name} ile ${DOW[sel.getDay()]} ${fmtShort(iso(sel))} saat ${hh(hr)} dersiniz tanımlanmıştır. Kalan ders hakkınız: ${s.pkg.lessons-s.pkg.used}.`,'onay');
   S.addSlot=null; save(); render(); toast(`${s.name.split(' ')[0]} · ${hh(hr)} eklendi · kotadan düşüldü`); }
 function addListHTML(){ const q=(S.addSearch||'').toLocaleLowerCase('tr');
   const list=studentsOf(curTrainer()).filter(s=>s.name.toLocaleLowerCase('tr').includes(q));
@@ -632,7 +667,7 @@ function renderLogin(){ const f=S.authForm||{};
       <p class="lead">Telefon numaran ve şifrenle gir. Şifreni salon yönetimi verir.</p>
       ${f.err?`<div class="autherr">${ic('alert',16)} ${f.err}</div>`:''}
       <div class="field"><label>Telefon numarası</label><input type="tel" inputmode="tel" placeholder="05xx xxx xx xx" value="${(f.phone||'').replace(/"/g,'&quot;')}" oninput="S.authForm.phone=this.value"></div>
-      <div class="field"><label>Şifre</label><input type="password" inputmode="numeric" placeholder="••••" value="${(f.pass||'').replace(/"/g,'&quot;')}" oninput="S.authForm.pass=this.value" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="field"><label>Şifre</label><input type="password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Şifreniz" value="${(f.pass||'').replace(/"/g,'&quot;')}" oninput="S.authForm.pass=this.value" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn" onclick="doLogin()">${ic('logout',18)} Giriş yap</button>
     </div>
   </div>`;
@@ -733,7 +768,7 @@ function renderBook(){
 function openLesson(rid){ S.lessonSheet=rid; save(); render(); }
 function closeLesson(){ S.lessonSheet=null; save(); render(); }
 function reqCancel(rid){ const r=S.requests.find(x=>x.id===rid); if(!r)return; r.pending2={type:'cancel'}; S.lessonSheet=null; save(); render();
-  const sd=r.dateISO===iso(new Date()); toast('İptal talebi gönderildi'+(sd?' · aynı gün: hak yanabilir':' · onayda hak iade')); }
+  const sd=isLate(r); toast('İptal talebi gönderildi'+(sd?` · son ${LATE_H} saat: hak yanar`:' · onayda hak iade')); }
 function withdrawChange(rid){ const r=S.requests.find(x=>x.id===rid); if(!r)return; r.pending2=null; S.lessonSheet=null; save(); render(); toast('Talep geri alındı'); }
 function startMove(rid){ const r=S.requests.find(x=>x.id===rid); if(!r)return; S.moveLessonId=rid; S.bookTrainer=r.trainerId; S.bookHour=null; S.bookWeek=0; S.bookDayOffset=S.dayOffset; S.lessonSheet=null; S.screen.student='reschedule'; save(); render(); }
 function cancelMove(){ S.moveLessonId=null; S.bookHour=null; S.screen.student='home'; save(); render(); }
@@ -754,7 +789,7 @@ function renderReschedule(){
   <button class="btn" onclick="confirmMove()" ${S.bookHour==null?'disabled':''}>${ic('refresh',18)} Taşıma Talebi Gönder</button>`;
 }
 function lessonSheet(){ if(!S.lessonSheet) return ''; const r=S.requests.find(x=>x.id===S.lessonSheet); if(!r) return '';
-  const sd=r.dateISO===iso(new Date());
+  const sd=isLate(r); const hleft=Math.max(0,Math.round(hoursUntil(r)));
   const info=`${firstName(r.trainerId)} Hoca · ${DOW[new Date(r.dateISO).getDay()]} ${fmtShort(r.dateISO)} · ${hh(r.hour)}`;
   let body;
   if(r.pending2){ const label=r.pending2.type==='cancel'?'İptal talebin onay bekliyor':`Taşıma talebin onay bekliyor → ${DOW[new Date(r.pending2.dateISO).getDay()]} ${hh(r.pending2.hour)}`;
@@ -762,7 +797,7 @@ function lessonSheet(){ if(!S.lessonSheet) return ''; const r=S.requests.find(x=
       <button class="btn ghost" onclick="withdrawChange('${r.id}')">Talebi geri al</button>`;
   } else {
     body=`<button class="btn ghost" onclick="startMove('${r.id}')">${ic('refresh',18)} Dersi taşı (başka saate)</button>
-      <div class="row" style="background:var(--surface-2);border-style:dashed"><div class="ic ${sd?'stop':'ok'}">${ic(sd?'x':'check',18)}</div><div class="grow"><div class="t">${sd?'Bugünkü ders — iptalde hak yanar':'İptalde hakkın iade edilir'}</div><div class="d">İptal hoca onayına düşer</div></div></div>
+      <div class="row" style="background:var(--surface-2);border-style:dashed"><div class="ic ${sd?'stop':'ok'}">${ic(sd?'alert':'check',18)}</div><div class="grow"><div class="t">${sd?`Son ${LATE_H} saat — iptalde hak yanar`:'İptalde hakkın iade edilir'}</div><div class="d">${sd?`Derse ${hleft} saat kaldı`:`Derse ${hleft} saat var · ${LATE_H} saat kalana kadar ücretsiz`} · hoca onayına düşer</div></div></div>
       <button class="btn" style="background:var(--stop)" onclick="reqCancel('${r.id}')">${ic('trash',18)} Dersi iptal et</button>`;
   }
   return `<div class="sheet-bg" onclick="if(event.target===this)closeLesson()"><div class="sheet">
@@ -788,24 +823,26 @@ function renderTrainer(){
 function pendCard(r){ return `<div class="card" style="padding:14px"><div class="row" style="background:none;border:none;padding:0 0 12px"><div class="mono-av wait">${r.initials}</div><div class="grow"><div class="t">${r.studentName}</div><div class="d mono">${DOW[new Date(r.dateISO).getDay()]} ${fmtShort(r.dateISO)} · ${hh(r.hour)}</div></div></div><div class="btnrow"><button class="b-ok" onclick="approve('${r.id}')">${ic('check',16)} Onayla</button><button class="b-no" onclick="reject('${r.id}')">${ic('x',16)} Reddet</button></div></div>`; }
 
 function changeReqs(T){ return S.requests.filter(r=>r.trainerId===T && r.status==='approved' && r.pending2); }
-function changeCard(r){ const sd=r.dateISO===iso(new Date()); const c=r.pending2;
+function changeCard(r){ const sd=isLate(r); const c=r.pending2;
   if(c.type==='cancel'){
     return `<div class="card" style="padding:14px"><div class="row" style="background:none;border:none;padding:0 0 6px"><div class="mono-av stop">${r.initials}</div><div class="grow"><div class="t">${r.studentName} · iptal istiyor</div><div class="d mono">${DOW[new Date(r.dateISO).getDay()]} ${fmtShort(r.dateISO)} · ${hh(r.hour)}</div></div></div>
-      <div class="d" style="margin:0 2px 10px; color:${sd?'var(--stop)':'var(--ok)'}">${sd?'Aynı gün — onayında öğrencinin hakkı yanar':'Onayında hak iade edilir'}</div>
+      <div class="d" style="margin:0 2px 10px; color:${sd?'var(--stop)':'var(--ok)'}">${sd?`Son ${LATE_H} saat — onayında öğrencinin hakkı yanar`:'Onayında hak iade edilir'}</div>
       <div class="btnrow"><button class="b-ok" onclick="approveChange('${r.id}')">${ic('check',16)} İptali onayla</button><button class="b-no" onclick="rejectChange('${r.id}')">${ic('x',16)} Reddet</button></div></div>`; }
   return `<div class="card" style="padding:14px"><div class="row" style="background:none;border:none;padding:0 0 6px"><div class="mono-av wait">${r.initials}</div><div class="grow"><div class="t">${r.studentName} · taşımak istiyor</div><div class="d mono">${DOW[new Date(r.dateISO).getDay()]} ${hh(r.hour)} → ${DOW[new Date(c.dateISO).getDay()]} ${fmtShort(c.dateISO)} ${hh(c.hour)}</div></div></div>
     <div class="btnrow"><button class="b-ok" onclick="approveChange('${r.id}')">${ic('check',16)} Taşımayı onayla</button><button class="b-no" onclick="rejectChange('${r.id}')">${ic('x',16)} Reddet</button></div></div>`; }
 function approveChange(rid){ const r=S.requests.find(x=>x.id===rid); if(!r||!r.pending2)return; const c=r.pending2; const s=member(r.studentId);
-  if(c.type==='cancel'){ const sd=r.dateISO===iso(new Date());
+  if(c.type==='cancel'){ const sd=isLate(r);
     if(!sd && s) s.pkg.used=Math.max(0,s.pkg.used-1);
     if(s && s.id===S.meId) S.log.unshift({dateISO:r.dateISO,trainer:firstName(r.trainerId)+' H.',kind:sd?'burn':'refund',delta:sd?-1:1});
-    r.status='cancelled'; r.pending2=null;
+    r.status='cancelled'; r.burned=sd; r.pending2=null;
     S.notifs.unshift({icon:'x',t:'İptal onaylandı',d:`${firstName(r.trainerId)} Hoca · ${hh(r.hour)} · ${sd?'hak yandı':'hak iade'}`,when:'şimdi'});
+    waStudent(r.studentId,`${DOW[new Date(r.dateISO).getDay()]} ${fmtShort(r.dateISO)} ${hh(r.hour)} dersiniz iptal edilmiştir. ${sd?`Ders saatine ${LATE_H} saatten az kaldığı için ders hakkınız düşmüştür.`:'Ders hakkınız iade edilmiştir.'}`,'iptal');
     save(); render(); toast(`İptal onaylandı · ${sd?'hak yandı':'hak iade edildi'}`); return; }
   const taken=activeReqs(r.trainerId,c.dateISO).some(x=>x.id!==r.id&&x.hour===c.hour);
   if(taken){ toast('Hedef saat dolu — taşınamadı'); return; }
   r.dateISO=c.dateISO; r.hour=c.hour; r.pending2=null;
   S.notifs.unshift({icon:'refresh',t:'Taşıma onaylandı',d:`${firstName(r.trainerId)} Hoca · ${DOW[new Date(r.dateISO).getDay()]} ${hh(r.hour)}`,when:'şimdi'});
+  waStudent(r.studentId,`Dersiniz ${DOW[new Date(r.dateISO).getDay()]} ${fmtShort(r.dateISO)} ${hh(r.hour)} olarak güncellenmiştir. ${trainer(r.trainerId).name} ile görüşmeniz onaylanmıştır.`,'taşıma');
   save(); render(); toast('Taşıma onaylandı'); }
 function rejectChange(rid){ const r=S.requests.find(x=>x.id===rid); if(!r||!r.pending2)return; const t=r.pending2.type; r.pending2=null;
   S.notifs.unshift({icon:'x',t:(t==='cancel'?'İptal reddedildi':'Taşıma reddedildi'),d:`${firstName(r.trainerId)} Hoca · ders duruyor`,when:'şimdi'});
@@ -894,24 +931,39 @@ function renderAdminPanel(){
   <div class="stat2"><div class="stat"><div class="n">${S.roster.length}</div><div class="l">Öğrenci</div></div><div class="stat"><div class="n">${TRAINERS.length}</div><div class="l">Hoca</div></div></div>
   <div class="stat2"><div class="stat"><div class="n">${pr.reduce((a,r)=>a+r.count,0)}</div><div class="l">Bu ay ders</div></div><div class="stat"><div class="n money" style="color:var(--accent)">${tl(totP)}</div><div class="l">Bu ay hakediş</div></div></div>
 
-  <div class="sect">Hocalar · pay oranları</div>
+  <div class="sect">Hocalar · varsayılan pay oranı</div>
   <button class="btn ghost sm" onclick="openForm('trainer')">${ic('plus',16)} Yeni hoca tanımla</button>
   ${TRAINERS.map(t=>`<div class="row"><div class="mono-av">${t.initials}</div>
     <div class="grow"><div class="t">${t.name} ${t.owner?'<span class="tag mut">Sahip</span>':''}${t.mustChange?'<span class="tag wait">İlk giriş</span>':''}</div><div class="d mono">${fmtPhone(t.phone)} · ${cnt(t.id)} ders</div></div>
     <div class="rateinp"><input type="number" min="0" max="100" inputmode="numeric" value="${rateOf(t.id)}" oninput="setRateLive('${t.id}',this.value)"><span>%</span></div></div>`).join('')}
-  <div class="d" style="margin:2px 2px 0">Pay oranı yalnızca burada görünür · hocalar göremez</div>
+  <div class="d" style="margin:2px 2px 0">Bu oran yeni öğrenci tanımlarken otomatik gelir · öğrenci bazında değiştirilebilir. Hocalar göremez.</div>
 
   <div class="sect">Öğrenciler</div>
   <button class="btn ghost sm" onclick="openForm('student')">${ic('plus',16)} Yeni öğrenci tanımla</button>
   <button class="btn ghost sm" onclick="go('members')">${ic('users',16)} Üye listesi & paketler</button>
+  <div class="sect">Bildirimler</div>
+  <div class="row" style="cursor:pointer" onclick="openOutbox()"><div class="ic ok">${ic('phone',18)}</div><div class="grow"><div class="t">WhatsApp bildirimleri</div><div class="d">${(S.outbox||[]).length} mesaj kuyrukta · entegrasyon bekliyor</div></div><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>
+
   <div class="sect">Raporlar</div>
   <button class="btn" onclick="go('reports')">${ic('chart',18)} Hakediş & performans</button>`;
 }
+function openOutbox(){ S.formSheet='outbox'; save(); render(); }
+function outboxSheet(){ const list=(S.outbox||[]).slice(0,25);
+  return `<div class="sheet-bg" onclick="if(event.target===this)closeForm()"><div class="sheet">
+    <div class="sheet-h"><div><div class="eyebrow">Entegrasyon hazırlığı</div><div class="h1">WhatsApp kuyruğu</div></div><button class="sheet-x" onclick="closeForm()">${ic('x',18)}</button></div>
+    <div style="padding:0 16px 8px"><div class="row" style="background:var(--surface-2);border-style:dashed"><div class="ic wait">${ic('alert',18)}</div><div class="grow"><div class="t">Henüz gönderilmiyor</div><div class="d">WhatsApp Business API bağlanınca bu mesajlar otomatik gidecek</div></div></div></div>
+    <div class="sheet-list">${list.length?list.map(m=>`<div class="pickrow" style="flex-direction:column;align-items:stretch;gap:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="t mono" style="font-size:13px">${m.phone}</span><span class="tag mut">${m.kind}</span></div>
+      <div class="d" style="margin:0;line-height:1.5">${m.text}</div></div>`).join(''):`<div class="empty">Henüz mesaj oluşmadı · bir ders onaylayınca burada görünür</div>`}</div></div></div>`;
+}
 function openForm(t){ S.formSheet=t;
-  if(t==='trainer') S.nt={name:'',phone:'',pass:'1234',rate:50}; else S.ns={name:'',phone:'',pass:'1234',trainers:[],lessons:8,months:2,price:9600};
+  if(t==='trainer') S.nt={name:'',phone:'',pass:'1234',rate:50}; else S.ns={name:'',phone:'',pass:'1234',trainers:[],rates:{},lessons:8,months:2,price:9600};
   save(); render(); }
 function closeForm(){ S.formSheet=null; save(); render(); }
-function nsToggleTrainer(id){ const a=S.ns.trainers; const i=a.indexOf(id); if(i>=0)a.splice(i,1); else a.push(id); save(); render(); }
+function nsToggleTrainer(id){ const a=S.ns.trainers; const i=a.indexOf(id);
+  if(i>=0)a.splice(i,1); else { a.push(id); S.ns.rates=S.ns.rates||{}; if(S.ns.rates[id]===undefined) S.ns.rates[id]=rateOf(id); }
+  save(); render(); }
+function nsSetRate(id,v){ S.ns.rates=S.ns.rates||{}; S.ns.rates[id]=Math.max(0,Math.min(100,parseInt(v)||0)); save(); }
 function initialsOf(name){ return name.trim().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toLocaleUpperCase('tr'); }
 function phoneTaken(ph){ const p=normPhone(ph); return (S.trainers||[]).some(t=>normPhone(t.phone)===p)||(S.roster||[]).some(s=>normPhone(s.phone)===p); }
 function addTrainer(){ const f=S.nt; const name=(f.name||'').trim();
@@ -933,10 +985,12 @@ function addStudent(){ const f=S.ns; const name=(f.name||'').trim();
   if(!f.trainers.length){ toast('En az bir hoca seç'); return; }
   const now=new Date(); now.setHours(12,0,0,0);
   const lessons=Math.max(1,parseInt(f.lessons)||1), months=Math.max(1,parseInt(f.months)||1), price=Math.max(0,parseInt(f.price)||0);
-  S.roster.push({id:'s'+Date.now(),name,initials:initialsOf(name),phone:fmtPhone(f.phone),pass:String(f.pass),mustChange:true,trainers:[...f.trainers],
+  const trRates={}; f.trainers.forEach(id=>{ const v=(f.rates||{})[id]; trRates[id]=(v!==undefined?Math.max(0,Math.min(100,parseInt(v)||0)):rateOf(id)); });
+  S.roster.push({id:'s'+Date.now(),name,initials:initialsOf(name),phone:fmtPhone(f.phone),pass:String(f.pass),mustChange:true,trainers:[...f.trainers],trainerRates:trRates,
     pkg:{lessons,months,used:0,price,startISO:iso(now),endISO:iso(addDays(now,months*30))}});
   S.formSheet=null; save(); render(); toast(`${name} eklendi · geçici şifre: ${f.pass}`); }
 function formSheet(){ if(!S.formSheet) return '';
+  if(S.formSheet==='outbox') return outboxSheet();
   if(S.formSheet==='trainer'){ const f=S.nt;
     return `<div class="sheet-bg" onclick="if(event.target===this)closeForm()"><div class="sheet">
       <div class="sheet-h"><div><div class="eyebrow">Yönetim</div><div class="h1">Yeni hoca</div></div><button class="sheet-x" onclick="closeForm()">${ic('x',18)}</button></div>
@@ -956,7 +1010,8 @@ function formSheet(){ if(!S.formSheet) return '';
       <div class="field"><label>Telefon numarası</label><input type="tel" inputmode="tel" value="${(f.phone||'').replace(/"/g,'&quot;')}" oninput="S.ns.phone=this.value" placeholder="05xx xxx xx xx"><span class="hint">Giriş anahtarı · ileride SMS bildirimleri buraya gider</span></div>
       <div class="field"><label>Geçici şifre</label><input type="text" value="${(f.pass||'').replace(/"/g,'&quot;')}" oninput="S.ns.pass=this.value"><span class="hint">Öğrenciye ilet · ilk girişte kendi şifresini belirleyecek</span></div>
       <div class="field"><label>Hoca(lar) · dokunarak seç</label>
-        <div class="days" style="padding-bottom:2px">${TRAINERS.map(t=>`<div class="day ${f.trainers.includes(t.id)?'on':''}" style="min-width:auto;padding:10px 12px" onclick="nsToggleTrainer('${t.id}')">${t.name.split(' ')[0]}</div>`).join('')}</div></div>
+        <div class="days" style="padding-bottom:2px">${TRAINERS.map(t=>`<div class="day ${f.trainers.includes(t.id)?'on':''}" style="min-width:auto;padding:10px 12px" onclick="nsToggleTrainer('${t.id}')">${t.name.split(' ')[0]}</div>`).join('')}</div>
+        ${f.trainers.length?`<div style="margin-top:10px">${f.trainers.map(id=>`<div class="row" style="padding:10px 12px;margin-bottom:7px"><div class="mono-av" style="width:32px;height:32px;border-radius:10px;font-size:11px">${trainer(id).initials}</div><div class="grow"><div class="t" style="font-size:13.5px">${trainer(id).name}</div><div class="d">Bu öğrenciden alacağı pay</div></div><div class="rateinp"><input type="number" min="0" max="100" inputmode="numeric" value="${(f.rates||{})[id]!==undefined?f.rates[id]:rateOf(id)}" oninput="nsSetRate('${id}',this.value)"><span>%</span></div></div>`).join('')}</div>`:''}</div>
       <div class="field"><label>Ders adedi</label><input type="number" min="1" inputmode="numeric" value="${f.lessons}" oninput="S.ns.lessons=this.value"></div>
       <div class="field"><label>Süre (ay)</label><input type="number" min="1" inputmode="numeric" value="${f.months}" oninput="S.ns.months=this.value"></div>
       <div class="field"><label>Paket ücreti (₺)</label><input type="number" min="0" inputmode="numeric" value="${f.price}" oninput="S.ns.price=this.value"><span class="hint">Ders başı ≈ ${tl(Math.round((parseInt(f.price)||0)/Math.max(1,parseInt(f.lessons)||1)))}</span></div>
@@ -990,20 +1045,23 @@ function renderPayroll(){
   const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+S.repMonth);
   const pr=payroll(S.repMonth);
   const totC=pr.reduce((a,r)=>a+r.count,0), totG=pr.reduce((a,r)=>a+r.gross,0), totP=pr.reduce((a,r)=>a+r.pay,0);
+  const totBC=pr.reduce((a,r)=>a+r.burnedCount,0), totBG=pr.reduce((a,r)=>a+r.burnedGross,0);
   return `<div class="appbar"><div><button class="backbtn" onclick="go('reports')">${ic('chevronL',18)} Raporlar</button><div class="h1" style="margin-top:8px">Hakediş</div><div class="subline">Hoca ödemeleri · ${MONF[d.getMonth()]} ${d.getFullYear()}</div></div><div class="avatar">NU</div></div>
   <div class="weeknav"><button class="navbtn" onclick="repMonthShift(-1)">${ic('chevronL',20)}</button>
     <div class="wncenter"><div class="wnrange">${MONF[d.getMonth()]}</div><div class="wnmonth">${d.getFullYear()}</div></div>
     <button class="navbtn" ${S.repMonth===0?'disabled':''} onclick="repMonthShift(1)">${ic('chevronR',20)}</button></div>
-  <div class="stat2"><div class="stat"><div class="n money">${tl(totG)}</div><div class="l">Aylık ciro</div></div>
+  <div class="stat2"><div class="stat"><div class="n">${totC}<span class="u"> saat</span></div><div class="l">Verilen ders</div></div>
+    <div class="stat"><div class="n" style="color:var(--stop)">${totBC}<span class="u"> saat</span></div><div class="l">İptal · hak yanan</div></div></div>
+  <div class="stat2"><div class="stat"><div class="n money">${tl(totG+totBG)}</div><div class="l">Toplam ciro${totBG?` · ${tl(totBG)} yanan`:''}</div></div>
     <div class="stat"><div class="n money" style="color:var(--accent)">${tl(totP)}</div><div class="l">Ödenecek toplam</div></div></div>
   <div class="card">
     <div class="sect" style="margin:0 0 10px; display:flex; justify-content:space-between; align-items:center"><span>Hoca bazında</span><button class="csvbtn" onclick="exportPayrollCSV()">${ic('chart',14)} Excel (CSV)</button></div>
     ${pr.length?`<div class="tblwrap"><table class="tbl">
-      <thead><tr><th>Hoca</th><th class="num">Ders</th><th class="num">Ciro</th><th class="num">Ödenecek</th></tr></thead>
-      <tbody>${pr.map(r=>`<tr><td>${r.name}</td><td class="num">${r.count}</td><td class="num">${tl(r.gross)}</td><td class="num" style="font-weight:800">${tl(r.pay)}</td></tr>`).join('')}</tbody>
-      <tfoot><tr><td>TOPLAM</td><td class="num">${totC}</td><td class="num">${tl(totG)}</td><td class="num">${tl(totP)}</td></tr></tfoot>
-    </table></div>`:`<div class="empty">Bu ayda verilen ders yok</div>`}
-    <div class="d" style="margin-top:10px">Pay oranları Yönetim panelinde tanımlanır</div>
+      <thead><tr><th>Hoca</th><th class="num">Ders</th><th class="num">İptal</th><th class="num">Ciro</th><th class="num">Ödenecek</th></tr></thead>
+      <tbody>${pr.map(r=>`<tr><td>${r.name}</td><td class="num">${r.count}</td><td class="num" style="color:${r.burnedCount?'var(--stop)':'var(--ink-3)'}">${r.burnedCount}</td><td class="num">${tl(r.gross+r.burnedGross)}</td><td class="num" style="font-weight:800">${tl(r.pay)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>TOPLAM</td><td class="num">${totC}</td><td class="num">${totBC}</td><td class="num">${tl(totG+totBG)}</td><td class="num">${tl(totP)}</td></tr></tfoot>
+    </table></div>`:`<div class="empty">Bu ayda kayıt yok</div>`}
+    <div class="d" style="margin-top:10px">İptal = son ${LATE_H} saatte iptal edilip kotadan düşen ders · ciroya dahil, hocaya ödenmez<br>Pay oranları öğrenci bazında Yönetim panelinde tanımlanır</div>
   </div>`;
 }
 function renderReports(){
@@ -1040,12 +1098,15 @@ function renderMemberDetail(id){
   <div class="row"><div class="ic">${ic('ticket',18)}</div><div class="grow"><div class="t mono">${p.lessons} ders · ${p.months} ay</div><div class="d">${fmtShort(p.startISO)} – ${fmtShort(p.endISO)} · ${p.used}/${p.lessons} kullanıldı</div></div><span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span></div>
   <div class="row"><div class="ic acc">${ic('chart',18)}</div><div class="grow"><div class="t mono">${tl(p.price||0)}</div><div class="d">Ders başı ${tl(perLesson(p))} · hoca hakedişi bu tutardan hesaplanır</div></div></div>
   <div class="row"><div class="ic">${ic('phone',18)}</div><div class="grow"><div class="t mono">${fmtPhone(s.phone)||'—'}</div><div class="d">Giriş anahtarı${s.mustChange?' · ilk giriş bekleniyor':''}</div></div><button class="btn ghost sm" style="width:auto;padding:9px 12px" onclick="resetPass('${s.id}')">Şifre sıfırla</button></div>
-  <div class="chips">${s.trainers.map(tid=>`<span class="chip">${ic('user',13)} ${trainer(tid).name}</span>`).join('')}</div>
+  <div class="sect">Hocaları · pay oranı</div>
+  ${s.trainers.map(tid=>`<div class="row"><div class="mono-av" style="width:34px;height:34px;border-radius:11px;font-size:12px">${trainer(tid).initials}</div><div class="grow"><div class="t">${trainer(tid).name}</div><div class="d">Bu öğrenciden alıyor</div></div><span class="tag ${(s.trainerRates||{})[tid]!==undefined&&s.trainerRates[tid]!==rateOf(tid)?'wait':'mut'}">%${rateFor(s,tid)}</span></div>`).join('')}
   <div class="sect">Hızlı işlem</div>
   <div class="btnrow"><button class="btn ghost sm" onclick="extendMonths('${id}',1)">${ic('refresh',16)} Süre +1 Ay</button><button class="btn ghost sm" onclick="addLessons('${id}',4)">${ic('plus',16)} +4 Ders</button></div>
   <div class="sect">Yeni paket / hoca ata</div>
   <div class="card">
-    <div class="field"><label>Hoca(lar) · çoklu seçilebilir</label><div class="checks">${TRAINERS.map(t=>`<div class="chk ${d.trainers.includes(t.id)?'on':''}" onclick="defToggleTrainer('${t.id}')">${t.name.split(' ')[0]}</div>`).join('')}</div></div>
+    <div class="field"><label>Hoca(lar) · çoklu seçilebilir</label>
+      <div class="days" style="padding-bottom:2px">${TRAINERS.map(t=>`<div class="day ${d.trainers.includes(t.id)?'on':''}" style="min-width:auto;padding:10px 12px" onclick="defToggleTrainer('${t.id}')">${t.name.split(' ')[0]}</div>`).join('')}</div>
+      ${d.trainers.length?`<div style="margin-top:10px">${d.trainers.map(id=>`<div class="row" style="padding:10px 12px;margin-bottom:7px"><div class="mono-av" style="width:32px;height:32px;border-radius:10px;font-size:11px">${trainer(id).initials}</div><div class="grow"><div class="t" style="font-size:13.5px">${trainer(id).name}</div><div class="d">Bu öğrenciden alacağı pay</div></div><div class="rateinp"><input type="number" min="0" max="100" inputmode="numeric" value="${(d.rates||{})[id]!==undefined?d.rates[id]:rateOf(id)}" oninput="defSetRate('${id}',this.value)"><span>%</span></div></div>`).join('')}</div>`:''}</div>
     <div class="field"><label>Ders adedi</label><div class="quickrow" style="margin-bottom:9px">${[4,5,8,10,16].map(n=>`<div class="quick ${d.lessons==n?'on':''}" onclick="defQuick(${n})">${n}</div>`).join('')}</div>
       <input type="number" min="1" inputmode="numeric" value="${d.lessons}" oninput="S.def.lessons=this.value"><span class="hint">İstediğin sayıyı yaz — sabit değil</span></div>
     <div class="field"><label>Süre (ay)</label><input type="number" min="1" inputmode="numeric" value="${d.months}" oninput="S.def.months=this.value"><span class="hint">Yeni paket · kullanım sıfırlanır</span></div>
