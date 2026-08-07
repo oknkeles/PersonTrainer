@@ -280,6 +280,32 @@
   .lesdel:active{ background:var(--stop-bg); color:var(--stop); }
   .lesdel svg{ width:15px;height:15px; }
 
+  /* akıllı ders önerileri */
+  .sugwrap{ display:flex; gap:9px; overflow-x:auto; scrollbar-width:none; padding:12px 1px 4px; }
+  .sugwrap::-webkit-scrollbar{ display:none; }
+  .sug{ flex:0 0 auto; position:relative; min-width:112px; display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+    padding:13px 14px; border-radius:14px; border:1px solid var(--line); background:var(--surface); transition:.16s ease; }
+  .sug:active{ transform:scale(.96); }
+  .sug.fav{ border-color:var(--accent); background:var(--accent-soft); }
+  .sugtag{ position:absolute; top:-9px; left:10px; white-space:nowrap; background:var(--accent); color:#fff; font-size:9px; font-weight:800;
+    letter-spacing:.04em; text-transform:uppercase; padding:3px 7px; border-radius:6px; }
+  .sugday{ font-size:11.5px; font-weight:650; color:var(--ink-2); text-transform:uppercase; letter-spacing:.03em; }
+  .sughour{ font-size:21px; font-weight:700; letter-spacing:-.03em; color:var(--ink); }
+  .sug.fav .sughour{ color:var(--accent-ink); }
+  .sugtr{ font-size:11.5px; color:var(--ink-3); font-weight:600; }
+
+  /* üye listesi: filtre çipleri + alfabetik başlıklar */
+  .fchips{ display:flex; gap:7px; overflow-x:auto; scrollbar-width:none; padding:1px; }
+  .fchips::-webkit-scrollbar{ display:none; }
+  .fchip{ flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; padding:9px 13px; border-radius:11px;
+    background:var(--surface-2); border:1px solid var(--hair); color:var(--ink-2); font-size:12.5px; font-weight:650; transition:.16s ease; }
+  .fchip span{ font-family:var(--mono); font-size:11px; color:var(--ink-3); }
+  .fchip.on{ background:var(--ink); border-color:var(--ink); color:var(--bg); }
+  .fchip.on span{ color:var(--bg); opacity:.6; }
+  .alpha{ position:sticky; top:calc(var(--safe-t) + 60px); z-index:5; margin:6px 0 -2px; padding:5px 10px;
+    font-size:11px; font-weight:800; letter-spacing:.1em; color:var(--ink-3); font-family:var(--mono);
+    background:color-mix(in srgb,var(--bg) 92%,transparent); backdrop-filter:blur(10px); border-radius:7px; align-self:flex-start; }
+
   /* alt sayfa (bottom sheet) */
   .sheet-bg{ position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.42); display:flex; align-items:flex-end; justify-content:center; animation:fade .2s ease; }
   .sheet{ width:100%; max-width:520px; background:var(--bg); border-radius:22px 22px 0 0; border-top:1px solid var(--line); max-height:84vh; display:flex; flex-direction:column; padding-bottom:calc(var(--safe-b) + 10px); animation:sheetup .26s cubic-bezier(.2,.8,.2,1); }
@@ -370,7 +396,7 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v11';
+const KEY='pt_studio_v12';
 const BASE_TRAINERS=[{id:'t0',name:'Ramazan Haktan Tatar',initials:'RT',owner:true},
   {id:'t1',name:'Burak Hoca',initials:'BH'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
   {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
@@ -410,6 +436,12 @@ function seed(){
     mk('p20','Aslı Kurt','AK',['t1'],10,3,6,-20,70,1200),
     mk('p21','Burak Öz','BÖ',['t2'],8,2,4,-16,44,1150),
   ];
+  // kalabalık salon senaryosu için ek üyeler (alfabetik liste ve arama gerçekçi olsun)
+  const ADS=['Ayşe Korkmaz','Ahmet Şahin','Alper Güneş','Bora Çetin','Bahar Yalçın','Berk Aydın','Canan Erdem','Cenk Polat','Ceyhun Ak','Damla Ergin','Doruk Sever','Duygu Bal','Ege Kılıç','Elif Sarı','Emine Toprak','Ferhat Uçar','Feyza Demir','Gökhan Aslan','Gül Şen','Hande Yavuz','Hasan Kaya','Hilal Ateş','Işıl Meriç','İlker Doğan','İrem Su','Jale Aksu','Kaya Bulut','Kerem Yıldırım','Lale Öztürk','Melis Arı','Merve Çelik','Murat Koç','Nihan Taş','Okan Bilge','Oya Kurt','Ömer Faruk Ay','Pelin Duman','Rıza Kaplan','Selim Ergün','Serap Yılmaz','Sinem Akın','Şule Baran','Tolga Deniz','Tuğçe Er','Ufuk Yalın','Umut Şeker','Vedat Alp','Yasemin Kara','Zeki Turan','Zümrüt Ay'];
+  ADS.forEach((ad,i)=>{ const ana=BASE_TRAINERS[1+(i%4)].id, hocalar=[ana];
+    if(i%5===0){ const ek=BASE_TRAINERS[1+((i+2)%4)].id; if(ek!==ana) hocalar.push(ek); }
+    const ders=[4,5,8,10,12,16][i%6], ay=[1,1,2,3,3,4][i%6], per=1000+((i%7)*50);
+    roster.push(mk('g'+i,ad,initialsOf(ad),hocalar,ders,ay,i%(ders+1),-(5+(i%40)),(i%3===0?-2:20+(i%70)),per)); });
   const byName=n=>roster.find(r=>r.name===n);
   // müsaitlik: haftagünü -> açık saatler (başlangıç saatleri)
   const rng=(a,b)=>{const o=[];for(let h=a;h<b;h++)o.push(h);return o;};
@@ -438,6 +470,16 @@ function seed(){
   ];
   extra.forEach(e=>{ const s=byName(e[3]);
     requests.push({id:'r'+(rid++),trainerId:e[0],studentId:s.id,studentName:s.name,initials:s.initials,dateISO:iso(addDays(monday,e[1])),hour:e[2],status:'approved'}); });
+  // geçmiş dersler — öğrencinin alışkanlığı (akıllı öneri bunlardan öğrenir)
+  const gecmis=[
+    ['s1','t1',-7,19],['s1','t1',-14,19],['s1','t1',-21,19],['s1','t1',-28,19],  // Zeynep: Salı 19:00
+    ['s1','t2',-10,10],['s1','t1',-35,20],
+    ['p0','t1',-6,18],['p0','t1',-13,18],['p0','t1',-20,18],
+    ['p6','t1',-5,20],['p6','t1',-12,20],
+  ];
+  gecmis.forEach(g=>{ const s=roster.find(x=>x.id===g[0]); if(!s) return;
+    const d=addDays(monday,g[2]+1); // pazartesi+1 = salı
+    requests.push({id:'r'+(rid++),trainerId:g[1],studentId:s.id,studentName:s.name,initials:s.initials,dateISO:iso(d),hour:g[3],status:'approved'}); });
   requests.forEach(r=>{ const s=roster.find(x=>x.id===r.studentId); r.fee=(s&&s.pkg.lessons)?Math.round(s.pkg.price/s.pkg.lessons):0; });
   const rates={}; trs.forEach(t=>rates[t.id]=50); rates.t0=100; rates.t1=55; rates.t2=45;
   trs.forEach((t,i)=>{ t.phone='0532 100 00 '+pad(i); t.pass='1234'; t.mustChange=!(t.owner||t.id==='t1'); });
@@ -460,16 +502,16 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:`${trs[1].name} · Salı 10:00`,when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:`${trs[2].name} · onay bekliyor`,when:'dün'},
   ];
-  return {v:11, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  return {v:12, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
-    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
+    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', memberFilter:'all', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
     formSheet:null, nt:{name:'',phone:'',pass:'1234',rate:50}, ns:{name:'',phone:'',pass:'1234',trainers:[],rates:{},lessons:8,months:2,price:9600}, outbox:[],
     session:null, authForm:{phone:'',pass:'',err:''}, npForm:{p1:'',p2:'',err:''}, ownerView:'admin',
     roster, requests, availability, rates, trainers:trs, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==11) S=seed(); }catch(e){ S=seed(); }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==12) S=seed(); }catch(e){ S=seed(); }
   if(!S.trainers||!S.trainers.length) S.trainers=BASE_TRAINERS.map(t=>({...t}));
   TRAINERS=S.trainers; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
@@ -585,6 +627,76 @@ function exportPayrollCSV(){
 }
 function setRateLive(id,v){ S.rates=S.rates||{}; S.rates[id]=Math.max(0,Math.min(100,parseInt(v)||0)); save(); }
 
+/* ---------- akıllı ders önerisi ----------
+   Öğrencinin geçmiş derslerinden (gün, saat) alışkanlığını çıkarır,
+   önümüzdeki 2 hafta içindeki boş dilimleri bu alışkanlığa göre puanlar. */
+function habitProfile(sid){
+  const hist=S.requests.filter(r=>r.studentId===sid&&(r.status==='approved'||r.status==='cancelled'));
+  const dayHour={}, hourFreq={}, dayFreq={}; let n=0;
+  hist.forEach(r=>{ const dw=new Date(String(r.dateISO)+'T00:00:00').getDay();
+    dayHour[dw+'-'+r.hour]=(dayHour[dw+'-'+r.hour]||0)+1;
+    hourFreq[r.hour]=(hourFreq[r.hour]||0)+1;
+    dayFreq[dw]=(dayFreq[dw]||0)+1; n++; });
+  let fav=null,favN=0;
+  Object.entries(dayHour).forEach(([k,v])=>{ if(v>favN){ favN=v; const [d,h]=k.split('-'); fav={dw:+d,hour:+h,n:v}; } });
+  return {dayHour,hourFreq,dayFreq,total:n,fav};
+}
+function suggestSlots(limit=5){
+  const s=me(); if(!s) return [];
+  if(s.pkg.used>=s.pkg.lessons||daysLeft(s.pkg.endISO)===0) return [];
+  const P=habitProfile(S.meId); if(!P.total) return [];
+  const now=new Date(), out=[];
+  for(let i=0;i<14;i++){
+    const d=addDays(now,i), dw=d.getDay(), dISO=iso(d);
+    (s.trainers||[]).forEach(tid=>{
+      freeHours(tid,d).forEach(h=>{
+        if(dISO===iso(now)&&h<=now.getHours()+1) return;           // bugün için geçmiş/çok yakın saatler
+        if(S.requests.some(r=>r.studentId===S.meId&&r.dateISO===dISO&&r.hour===h&&(r.status==='approved'||r.status==='pending'))) return;
+        const tam=P.dayHour[dw+'-'+h]||0;
+        let sc = tam*12 + (P.hourFreq[h]||0)*4 + (P.dayFreq[dw]||0)*2
+               + ((P.hourFreq[h-1]||0)+(P.hourFreq[h+1]||0))*1.5    // komşu saatler
+               - i*0.2;                                            // yakın tarih önceliği
+        const usual=!!(P.fav&&P.fav.dw===dw&&P.fav.hour===h&&P.fav.n>1);
+        if(sc>0) out.push({tid,dISO,hour:h,score:sc,exact:tam>0,usual,gun:d});
+      });
+    });
+  }
+  out.sort((a,b)=>b.score-a.score);
+  // aynı (haftagünü + saat) kombinasyonu bir kez: en yakın tarihi göster
+  const seen=new Set(), uniq=[];
+  out.forEach(x=>{ const k=x.gun.getDay()+'-'+x.hour;
+    if(!seen.has(k)){ seen.add(k); uniq.push(x); } });
+  // çeşitlilik: aynı günden en fazla 2 öneri — kalanlar başka günlerden gelsin
+  const perDay={}, res=[], artik=[];
+  uniq.forEach(x=>{ const dw=x.gun.getDay(); perDay[dw]=(perDay[dw]||0)+1;
+    (perDay[dw]<=2?res:artik).push(x); });
+  return res.concat(artik).slice(0,limit);
+}
+function pickSuggestion(tid,dISO,hour){
+  const d=new Date(String(dISO)+'T12:00:00');
+  const mon=addDays(d,(d.getDay()===0?-6:1-d.getDay()));
+  const base=new Date(S.mondayISO); base.setHours(12,0,0,0);
+  S.bookWeek=Math.round((mon-base)/(7*864e5));
+  S.bookDayOffset=(d.getDay()===0?6:d.getDay()-1);
+  S.bookTrainer=tid; S.bookHour=hour;
+  save(); render();
+  const el=document.getElementById('bookConfirm'); if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function suggestionBlock(){
+  const list=suggestSlots(5); if(!list.length) return '';
+  const P=habitProfile(S.meId);
+  const ipucu=P.fav&&P.fav.n>1?`Genelde <b>${DOW[P.fav.dw]} ${hh(P.fav.hour)}</b> tercih ediyorsun`:'Geçmiş derslerine göre seçildi';
+  return `<div class="sect">Sana uygun saatler</div>
+  <div class="d" style="margin:-2px 2px 2px">${ipucu}</div>
+  <div class="sugwrap">${list.map(x=>{
+    const d=new Date(String(x.dISO)+'T12:00:00');
+    return `<button class="sug ${x.usual?'fav':''}" onclick="pickSuggestion('${x.tid}','${x.dISO}',${x.hour})">
+      ${x.usual?`<span class="sugtag">Her zamanki</span>`:''}
+      <span class="sugday">${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}</span>
+      <span class="sughour mono">${hh(x.hour)}</span>
+      <span class="sugtr">${firstName(x.tid)}</span></button>`; }).join('')}</div>`;
+}
+
 function book(){
   const sel=bookWeek()[S.bookDayOffset]; const t=trainer(S.bookTrainer); const p=me().pkg;
   if(p.used>=p.lessons){ toast('Ders hakkın bitti — yeni paket gerekiyor'); return; }
@@ -639,12 +751,26 @@ function defineSubmit(){ const m=member(S.def.memberId); const now=new Date(); n
   m.pkg={lessons,months,used:0,price,startISO:iso(now),endISO:iso(addDays(now,months*30))};
   save(); render(); toast(`${m.name.split(' ')[0]} · ${lessons} ders / ${months} ay · ${tl(price)}`); }
 
-/* yönetici arama */
+/* yönetici arama + alfabetik gruplama (200+ üye için) */
 function filterMembers(v){ S.memberSearch=v; save(); const el=document.getElementById('memberList'); if(el) el.innerHTML=memberListHTML(); }
-function memberListHTML(){ const q=(S.memberSearch||'').toLocaleLowerCase('tr');
-  const list=S.roster.filter(s=>s.name.toLocaleLowerCase('tr').includes(q));
+function setMemberFilter(f){ S.memberFilter=f; save(); render(); }
+function sortedRoster(){ return S.roster.slice().sort((a,b)=>a.name.localeCompare(b.name,'tr')); }
+function filteredMembers(){ const q=(S.memberSearch||'').toLocaleLowerCase('tr').trim();
+  const f=S.memberFilter||'all';
+  const qTel=q.replace(/\D/g,'').replace(/^0+/,''); // kısmi telefon: baştaki sıfırları at
+  return sortedRoster().filter(s=>{
+    if(q && !(s.name.toLocaleLowerCase('tr').includes(q) || (qTel && normPhone(s.phone).includes(qTel)))) return false;
+    if(f==='active') return !pkgEnded(s.pkg);
+    if(f==='ended') return pkgEnded(s.pkg);
+    if(f==='soon') return !pkgEnded(s.pkg)&&(daysLeft(s.pkg.endISO)<=14||s.pkg.lessons-s.pkg.used<=2);
+    return true; }); }
+function memberListHTML(){ const list=filteredMembers();
   if(!list.length) return `<div class="empty">Eşleşen üye yok</div>`;
-  return list.map(memberCard).join(''); }
+  let out='', harf='';
+  list.forEach(s=>{ const ilk=s.name.trim().charAt(0).toLocaleUpperCase('tr');
+    if(ilk!==harf){ harf=ilk; out+=`<div class="alpha">${harf}</div>`; }
+    out+=memberCard(s); });
+  return out; }
 function memberCard(s){ const p=s.pkg; const e=pkgEnded(p); const trs=s.trainers.map(id=>trainer(id).name.split(' ')[0]).join(', ');
   return `<div class="row" style="cursor:pointer" onclick="openMember('${s.id}')"><div class="mono-av ${e?'stop':''}">${s.initials}</div>
     <div class="grow"><div class="t">${s.name}</div><div class="d mono">${p.lessons-p.used}/${p.lessons} ders kaldı · ${e?'kapandı':daysLeft(p.endISO)+' gün'} · ${trs}</div></div>
@@ -808,7 +934,8 @@ function renderBook(){
   const week=bookWeek(); const sel=week[S.bookDayOffset]; const trs=me().trainers; if(!trs.includes(S.bookTrainer))S.bookTrainer=trs[0];
   const open=availHoursForDate(S.bookTrainer,sel); const free=freeHours(S.bookTrainer,sel);
   return `<div class="appbar"><div><button class="backbtn" onclick="go('home')">${ic('chevronL',18)} Geri</button><div class="h1" style="margin-top:8px">Ders Al</div></div></div>
-  <div class="sect">Hoca</div>
+  ${suggestionBlock()}
+  <div class="sect">Kendin seç · hoca</div>
   <div class="btnrow">${trs.map(id=>`<button class="btn ${id===S.bookTrainer?'':'ghost'} sm" style="flex:1" onclick="setBookTrainer('${id}')">${trainer(id).name.split(' ')[0]}</button>`).join('')}</div>
   <div class="sect">Hafta</div>
   ${weekNav(week,'bookWeekShift(-1)','bookWeekShift(1)',S.bookWeek===0)}
@@ -817,7 +944,7 @@ function renderBook(){
   <div class="sect">Boş saatler · ${fmtDay(sel)}</div>
   ${open.length?`<div class="slots">${open.map(hr=>{ const isFree=free.includes(hr); const on=S.bookHour===hr&&isFree;
     return `<div class="slot ${on?'sel':isFree?'free':'busy'}" ${isFree?`onclick="setBookHour(${hr})"`:''}>${hh(hr)}</div>`; }).join('')}</div>`:`<div class="empty">Hoca bu gün kapalı — başka gün seç</div>`}
-  ${S.bookHour!=null?`<div class="row" style="background:var(--surface-2);border-style:dashed"><div class="ic acc">${ic('lock',18)}</div><div class="grow"><div class="t mono">${DOW[sel.getDay()]} ${hh(S.bookHour)}</div><div class="d">Talep açılınca dilim kilitlenir · onayda 1 ders düşer</div></div></div>`:''}
+  ${S.bookHour!=null?`<div class="row" id="bookConfirm" style="background:var(--surface-2);border-style:dashed"><div class="ic acc">${ic('lock',18)}</div><div class="grow"><div class="t mono">${DOW[sel.getDay()]} ${sel.getDate()} ${MON[sel.getMonth()]} · ${hh(S.bookHour)}</div><div class="d">${firstName(S.bookTrainer)} Hoca · talep açılınca dilim kilitlenir, onayda 1 ders düşer</div></div></div>`:''}
   <button class="btn" onclick="book()" ${S.bookHour==null?'disabled':''}>${ic('check',18)} Ders Talebi Gönder</button>`;
 }
 
@@ -1177,8 +1304,16 @@ function renderReports(){
 }
 function renderMembers(){
   if(S.adminMember) return renderMemberDetail(S.adminMember);
-  return `<div class="appbar"><div><button class="backbtn" onclick="goHub()">${ic('chevronL',18)} Yönetim</button><div class="h1" style="margin-top:8px">Üyeler</div><div class="subline">${S.roster.length} üye · dokunup düzenle</div></div></div>
-  <div class="searchbar">${ic('search',18)}<input placeholder="İsimle ara…" value="${(S.memberSearch||'').replace(/"/g,'&quot;')}" oninput="filterMembers(this.value)"></div>
+  const f=S.memberFilter||'all';
+  const nAktif=S.roster.filter(s=>!pkgEnded(s.pkg)).length;
+  const nBitti=S.roster.filter(s=>pkgEnded(s.pkg)).length;
+  const nYakin=S.roster.filter(s=>!pkgEnded(s.pkg)&&(daysLeft(s.pkg.endISO)<=14||s.pkg.lessons-s.pkg.used<=2)).length;
+  const bulunan=filteredMembers().length;
+  const chip=(k,lbl,n)=>`<button class="fchip ${f===k?'on':''}" onclick="setMemberFilter('${k}')">${lbl}<span>${n}</span></button>`;
+  return `<div class="appbar"><div><button class="backbtn" onclick="goHub()">${ic('chevronL',18)} Yönetim</button><div class="h1" style="margin-top:8px">Üyeler</div><div class="subline">${S.roster.length} üye · alfabetik sıralı</div></div></div>
+  <div class="searchbar">${ic('search',18)}<input placeholder="İsim veya telefon ara…" value="${(S.memberSearch||'').replace(/"/g,'&quot;')}" oninput="filterMembers(this.value)"></div>
+  <div class="fchips">${chip('all','Tümü',S.roster.length)}${chip('active','Aktif',nAktif)}${chip('soon','Bitmek üzere',nYakin)}${chip('ended','Bitti',nBitti)}</div>
+  ${bulunan!==S.roster.length?`<div class="d" style="margin:0 2px">${bulunan} üye listeleniyor</div>`:''}
   <div id="memberList" style="display:flex;flex-direction:column;gap:10px">${memberListHTML()}</div>`;
 }
 function renderMemberDetail(id){
