@@ -79,9 +79,32 @@
   .tb-role{ font-size:11px; color:var(--ink-3); font-weight:600; margin-top:2px; }
   .tb-out{ width:38px; height:38px; border-radius:11px; background:var(--surface-2); border:1px solid var(--hair); color:var(--ink-2); display:flex; align-items:center; justify-content:center; flex:none; }
   .tb-out svg{ width:18px; height:18px; }
-  .ownerseg{ display:flex; background:var(--surface-2); border:1px solid var(--hair); border-radius:11px; padding:3px; margin-left:auto; }
-  .ownerseg button{ padding:7px 12px; border-radius:8px; font-size:12px; font-weight:700; color:var(--ink-2); transition:.16s ease; }
-  .ownerseg button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .tb-mgmt{ display:inline-flex; align-items:center; gap:6px; height:38px; padding:0 13px; border-radius:11px; flex:none;
+    background:var(--surface-2); border:1px solid var(--hair); color:var(--ink-2); font-size:12.5px; font-weight:700; transition:.16s ease; }
+  .tb-mgmt svg{ width:16px; height:16px; }
+  .tb-mgmt.on{ background:var(--ink); border-color:var(--ink); color:var(--bg); }
+  .tb-mgmt:active{ transform:scale(.97); }
+
+  /* yönetim hub — masaüstü öncelikli kart ızgarası */
+  .hubwrap{ padding:4px 0 10px; }
+  .hubsec{ margin:26px 0 12px; display:flex; align-items:center; gap:12px; }
+  .hubsec span{ font-size:10.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3); white-space:nowrap; }
+  .hubsec::after{ content:""; flex:1; height:1px; background:var(--line); }
+  .hubgrid{ display:grid; grid-template-columns:1fr; gap:11px; }
+  .hubcard{ display:flex; gap:14px; align-items:flex-start; padding:16px; border:1px solid var(--line); border-radius:14px;
+    background:var(--surface); cursor:pointer; transition:.16s ease; text-align:left; width:100%; }
+  .hubcard:hover{ border-color:var(--ink-3); }
+  .hubcard:active{ transform:scale(.995); background:var(--surface-2); }
+  .hubcard .hi{ width:38px; height:38px; border-radius:10px; background:var(--surface-2); color:var(--ink-2);
+    display:flex; align-items:center; justify-content:center; flex:none; }
+  .hubcard .hi svg{ width:19px; height:19px; }
+  .hubcard.act .hi{ background:var(--accent-soft); color:var(--accent); }
+  .hubcard .hb{ flex:1; min-width:0; }
+  .hubcard .hh{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .hubcard .ht{ font-size:15px; font-weight:700; letter-spacing:-.015em; }
+  .hubcard .hc{ font-size:11.5px; color:var(--ink-3); font-family:var(--mono); white-space:nowrap; }
+  .hubcard .hd{ font-size:12.5px; color:var(--ink-2); margin-top:5px; font-weight:500; line-height:1.45; }
+  @media (min-width:760px){ .hubgrid{ grid-template-columns:1fr 1fr; } .hubgrid.one{ grid-template-columns:1fr; } }
 
   /* müsaitlik: kompakt mod + saat havuzu */
   .modebar{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; padding:2px 1px; }
@@ -208,6 +231,7 @@
   .tbl tfoot td{ font-weight:800; border-top:1.5px solid var(--line); border-bottom:none; }
   .csvbtn{ display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:var(--accent); background:var(--accent-soft); padding:6px 10px; border-radius:8px; letter-spacing:0; text-transform:none; }
   .stat .n.money{ font-size:20px; }
+  #app.mgmt .content{ padding-bottom:40px; }
   @media (min-width:900px){
     #app.wide{ max-width:1100px; }
     #app.wide .content{ padding:6px 28px 60px; }
@@ -463,7 +487,8 @@ function doLogin(){ const f=S.authForm; const u=findUser(f.phone);
   if(!u){ f.err='Bu telefon numarası kayıtlı değil'; save(); render(); return; }
   if(String(u.rec.pass||'')!==String(f.pass||'')){ f.err='Şifre hatalı'; save(); render(); return; }
   S.session={id:u.id,kind:u.kind}; S.role=u.kind; if(u.kind==='student') S.meId=u.id;
-  if(u.kind==='admin'){ S.role='admin'; S.ownerView='admin'; }
+  // salon sahibi de bir hoca: girişte kendi takvimi açılır, yönetim ayrı bir alan
+  if(u.kind==='admin'){ S.role='trainer'; S.ownerView='trainer'; S.screen.trainer='agenda'; }
   f.err=''; f.pass=''; f.phone=''; S.npForm={p1:'',p2:'',err:''}; save(); render();
   toast(`Hoş geldin, ${u.rec.name.split(' ')[0]}`); }
 function logout(){ S.session=null; S.authForm={phone:'',pass:'',err:''}; save(); render(); }
@@ -472,7 +497,10 @@ function doNewPass(){ const f=S.npForm; const u=sessionUser(); if(!u) return;
   if(f.p1!==f.p2){ f.err='Şifreler eşleşmiyor'; save(); render(); return; }
   u.rec.pass=f.p1; u.rec.mustChange=false; S.npForm={p1:'',p2:'',err:''};
   save(); render(); toast('Şifren güncellendi'); }
-function setOwnerView(v){ S.ownerView=v; S.role=(v==='admin')?'admin':'trainer'; save(); render(); }
+function setOwnerView(v){ S.ownerView=v; S.role=(v==='admin')?'admin':'trainer';
+  if(v==='admin') S.screen.admin='hub'; else S.screen.trainer='agenda';
+  S.adminMember=null; save(); render(); }
+function goHub(){ S.screen.admin='hub'; S.adminMember=null; save(); render(); }
 /* profil: şifre değiştirme */
 function openProfile(){ S.formSheet='profile'; S.pwForm={cur:'',p1:'',p2:'',err:'',ok:''}; save(); render(); }
 function changePass(){ const f=S.pwForm||{}; const u=sessionUser(); if(!u) return;
@@ -708,7 +736,10 @@ function topbar(){ const u=sessionUser(); if(!u) return '';
       <div class="tb-av">${u.rec.initials}</div>
       <div style="min-width:0"><div class="tb-name">${u.rec.name}</div><div class="tb-role">${roleLbl}</div></div>
     </div>
-    ${owner?`<div class="ownerseg"><button class="${S.ownerView!=='trainer'?'on':''}" onclick="setOwnerView('admin')">Yönetim</button><button class="${S.ownerView==='trainer'?'on':''}" onclick="setOwnerView('trainer')">Takvimim</button></div>`:'<span style="margin-left:auto"></span>'}
+    <span style="margin-left:auto"></span>
+    ${owner?(S.ownerView==='admin'
+      ? `<button class="tb-mgmt on" onclick="setOwnerView('trainer')">${ic('chevronL',16)}<span>Takvimim</span></button>`
+      : `<button class="tb-mgmt" onclick="setOwnerView('admin')">${ic('gear',16)}<span>Yönetim</span></button>`):''}
     <button class="tb-out" onclick="logout()" title="Çıkış">${ic('logout',18)}</button>
   </div>`;
 }
@@ -724,7 +755,7 @@ function render(){
   h+=lessonSheet();
   h+=trPickSheet();
   h+=formSheet();
-  $('app').className=(S.role==='admin'&&(S.screen.admin==='reports'||S.screen.admin==='payroll'))?'wide':'';
+  $('app').className=(S.role==='admin')?'wide mgmt':'';
   $('app').innerHTML=h;
 }
 
@@ -944,37 +975,67 @@ function renderTrStudents(){ const T=curTrainer(); const tr=trainer(T)||{name:''
 function renderAdmin(){
   const sc=S.screen.admin;
   if(sc==='members') return renderMembers();
+  if(sc==='staff') return renderStaff();
   if(sc==='trainers') return renderAdminTrainers();
   if(sc==='payroll') return renderPayroll();
-  if(sc==='panel') return renderAdminPanel();
-  return renderReports();
+  if(sc==='reports') return renderReports();
+  return renderAdminPanel();
 }
+/* yönetim hub — masaüstünde kartlı, telefonda tek sütun */
 function renderAdminPanel(){
-  const pr=payroll(0); const cnt=id=>{ const x=pr.find(p=>p.id===id); return x?x.count:0; };
+  const pr=payroll(0);
   const bekleyen=S.requests.filter(r=>r.status==='pending'||(r.status==='approved'&&r.pending2)).length;
   const suresiDolan=S.roster.filter(s=>pkgEnded(s.pkg)).length;
-  return `<div class="appbar"><div><div class="eyebrow">Yönetim paneli</div><div class="h1">New U Sport Center</div><div class="subline">${S.roster.length} öğrenci · ${TRAINERS.length} hoca</div></div></div>
-  <div class="stat2"><div class="stat"><div class="n">${S.roster.length}</div><div class="l">Öğrenci</div></div><div class="stat"><div class="n">${TRAINERS.length}</div><div class="l">Hoca</div></div></div>
-  <div class="stat2"><div class="stat"><div class="n">${pr.reduce((a,r)=>a+r.count,0)}</div><div class="l">Bu ay ders</div></div>
-    <div class="stat"><div class="n" style="color:${suresiDolan?'var(--stop)':'var(--ink)'}">${suresiDolan}</div><div class="l">Paketi biten üye</div></div></div>
-  ${bekleyen?`<div class="row" style="background:var(--wait-bg);border-color:transparent;cursor:pointer" onclick="go('trainers')"><div class="ic wait">${ic('clock',18)}</div><div class="grow"><div class="t" style="color:var(--wait)">${bekleyen} talep onay bekliyor</div><div class="d">Dokun · hoca takvimine git</div></div><span style="color:var(--wait);display:flex">${ic('chevronR',18)}</span></div>`:''}
-  ${suresiDolan?`<div class="row" style="cursor:pointer" onclick="go('members')"><div class="ic stop">${ic('alert',18)}</div><div class="grow"><div class="t">${suresiDolan} üyenin paketi bitti</div><div class="d">Dokun · paketlerini yenile</div></div><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`:''}
+  const ilkGirisHoca=TRAINERS.filter(x=>x.mustChange).length;
+  const ilkGirisUye=S.roster.filter(x=>x.mustChange).length;
+  const card=(act,icon,title,count,desc,fn)=>`<button class="hubcard ${act?'act':''}" onclick="${fn}">
+    <span class="hi">${ic(icon,19)}</span>
+    <span class="hb"><span class="hh"><span class="ht">${title}</span><span class="hc">${count}</span></span><span class="hd">${desc}</span></span></button>`;
+  return `<div class="appbar"><div><div class="eyebrow">New U Sport Center</div><div class="h1">Yönetim</div><div class="subline">Tanımlamalar, takvimler ve raporlar</div></div></div>
+  <div class="hubwrap">
+    ${(bekleyen||suresiDolan)?`<div class="hubsec"><span>Dikkat gerektiren</span></div><div class="hubgrid">
+      ${bekleyen?`<button class="hubcard" style="background:var(--wait-bg);border-color:transparent" onclick="go('trainers')"><span class="hi" style="background:rgba(255,255,255,.5);color:var(--wait)">${ic('clock',19)}</span><span class="hb"><span class="hh"><span class="ht" style="color:var(--wait)">${bekleyen} talep onay bekliyor</span></span><span class="hd">Hoca takvimlerinden onayla veya reddet</span></span></button>`:''}
+      ${suresiDolan?`<button class="hubcard" style="background:var(--stop-bg);border-color:transparent" onclick="go('members')"><span class="hi" style="background:rgba(255,255,255,.5);color:var(--stop)">${ic('alert',19)}</span><span class="hb"><span class="hh"><span class="ht" style="color:var(--stop)">${suresiDolan} üyenin paketi bitti</span></span><span class="hd">Paketlerini yenile ki ders alabilsinler</span></span></button>`:''}
+    </div>`:''}
 
-  <div class="sect">Hocalar · varsayılan pay oranı</div>
+    <div class="hubsec"><span>Tanımlama</span></div>
+    <div class="hubgrid">
+      ${card(1,'plus','Yeni öğrenci','','Ad, telefon, hoca ataması, paket ve ücret bilgisiyle üye ekle','openForm(\'student\')')}
+      ${card(1,'plus','Yeni hoca','','Ad, telefon ve varsayılan pay oranıyla hoca ekle','openForm(\'trainer\')')}
+    </div>
+
+    <div class="hubsec"><span>Kişiler</span></div>
+    <div class="hubgrid">
+      ${card(0,'users','Üyeler',S.roster.length+' üye','Paket, süre, ücret ve hoca ataması — üyeye dokunup düzenle'+(ilkGirisUye?' · '+ilkGirisUye+'’i henüz giriş yapmadı':''),'go(\'members\')')}
+      ${card(0,'user','Hocalar',TRAINERS.length+' hoca','Pay oranları ve iletişim bilgileri'+(ilkGirisHoca?' · '+ilkGirisHoca+'’i henüz giriş yapmadı':''),'go(\'staff\')')}
+    </div>
+
+    <div class="hubsec"><span>Takvim</span></div>
+    <div class="hubgrid one">
+      ${card(0,'calendar','Hoca takvimleri','','Herhangi bir hocanın adına ders ekle, kaydır, sil; müsaitliğini düzenle ve taleplerini onayla','go(\'trainers\')')}
+    </div>
+
+    <div class="hubsec"><span>Finans ve rapor</span></div>
+    <div class="hubgrid">
+      ${card(0,'ticket','Hakediş & ödemeler',tl(pr.reduce((a,r)=>a+r.pay,0)),'Hoca başına ders, ciro ve ödenecek tutar · Excel’e aktar','go(\'payroll\')')}
+      ${card(0,'chart','Performans raporu',pr.reduce((a,r)=>a+r.count,0)+' ders','Verilen ders, iptaller, hoca başına dağılım ve yoğun saatler','go(\'reports\')')}
+    </div>
+
+    <div class="hubsec"><span>Sistem</span></div>
+    <div class="hubgrid one">
+      ${card(0,'phone','WhatsApp bildirimleri',(S.outbox||[]).length+' mesaj','Ders onayı, iptal ve taşıma mesajları · entegrasyon bekliyor','openOutbox()')}
+    </div>
+  </div>`;
+}
+/* hocalar listesi + pay oranları */
+function renderStaff(){
+  const pr=payroll(0); const cnt=id=>{ const x=pr.find(p=>p.id===id); return x?x.count:0; };
+  return `<div class="appbar"><div><button class="backbtn" onclick="goHub()">${ic('chevronL',18)} Yönetim</button><div class="h1" style="margin-top:8px">Hocalar</div><div class="subline">${TRAINERS.length} hoca · varsayılan pay oranları</div></div></div>
   <button class="btn ghost sm" onclick="openForm('trainer')">${ic('plus',16)} Yeni hoca tanımla</button>
   ${TRAINERS.map(t=>`<div class="row"><div class="mono-av">${t.initials}</div>
     <div class="grow"><div class="t">${t.name} ${t.owner?'<span class="tag mut">Sahip</span>':''}${t.mustChange?'<span class="tag wait">İlk giriş</span>':''}</div><div class="d mono">${fmtPhone(t.phone)} · ${cnt(t.id)} ders</div></div>
     <div class="rateinp"><input type="number" min="0" max="100" inputmode="numeric" value="${rateOf(t.id)}" oninput="setRateLive('${t.id}',this.value)"><span>%</span></div></div>`).join('')}
-  <div class="d" style="margin:2px 2px 0">Bu oran yeni öğrenci tanımlarken otomatik gelir · öğrenci bazında değiştirilebilir. Hocalar göremez.</div>
-
-  <div class="sect">Öğrenciler</div>
-  <button class="btn ghost sm" onclick="openForm('student')">${ic('plus',16)} Yeni öğrenci tanımla</button>
-  <button class="btn ghost sm" onclick="go('members')">${ic('users',16)} Üye listesi & paketler</button>
-  <div class="sect">Bildirimler</div>
-  <div class="row" style="cursor:pointer" onclick="openOutbox()"><div class="ic ok">${ic('phone',18)}</div><div class="grow"><div class="t">WhatsApp bildirimleri</div><div class="d">${(S.outbox||[]).length} mesaj kuyrukta · entegrasyon bekliyor</div></div><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>
-
-  <div class="sect">Raporlar</div>
-  <button class="btn" onclick="go('reports')">${ic('chart',18)} Hakediş & performans</button>`;
+  <div class="d" style="margin:2px 2px 0">Bu oran yeni öğrenci tanımlarken otomatik gelir · öğrenci bazında değiştirilebilir. Hocalar göremez.</div>`;
 }
 function openOutbox(){ S.formSheet='outbox'; save(); render(); }
 function outboxSheet(){ const list=(S.outbox||[]).slice(0,25);
@@ -1050,7 +1111,7 @@ function formSheet(){ if(!S.formSheet) return '';
 }
 function renderAdminTrainers(){
   const T=curTrainer(); const av=S.adminAvail;
-  const appbar=`<div class="appbar"><div><div class="eyebrow">Hoca yönetimi · her hoca için</div><div class="h1">${trainer(T).name}</div><div class="subline">Takvimini yönet · ders sil/kaydır/ekle · onayla</div></div></div>`;
+  const appbar=`<div class="appbar"><div><button class="backbtn" onclick="goHub()">${ic('chevronL',18)} Yönetim</button><div class="h1" style="margin-top:8px">${trainer(T).name}</div><div class="subline">Takvimini yönet · ders sil/kaydır/ekle · onayla</div></div></div>`;
   const picker=`<div class="sect" style="margin-top:2px">Hoca</div><div class="row" style="cursor:pointer" onclick="openTrPick()"><div class="mono-av">${trainer(T).initials}</div><div class="grow"><div class="t">${trainer(T).name}</div><div class="d">${TRAINERS.length} hoca · değiştirmek için dokun</div></div><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`;
   const modes=`<div class="toggle"><button class="${!av?'on':''}" onclick="setAdminAvail(false)">Takvim</button><button class="${av?'on':''}" onclick="setAdminAvail(true)">Müsaitlik</button></div>`;
   return appbar+picker+modes+(av?availBody():agendaBody());
@@ -1076,7 +1137,7 @@ function renderPayroll(){
   const pr=payroll(S.repMonth);
   const totC=pr.reduce((a,r)=>a+r.count,0), totG=pr.reduce((a,r)=>a+r.gross,0), totP=pr.reduce((a,r)=>a+r.pay,0);
   const totBC=pr.reduce((a,r)=>a+r.burnedCount,0), totBG=pr.reduce((a,r)=>a+r.burnedGross,0);
-  return `<div class="appbar"><div><button class="backbtn" onclick="go('reports')">${ic('chevronL',18)} Raporlar</button><div class="h1" style="margin-top:8px">Hakediş</div><div class="subline">Hoca ödemeleri · ${MONF[d.getMonth()]} ${d.getFullYear()}</div></div></div>
+  return `<div class="appbar"><div><button class="backbtn" onclick="goHub()">${ic('chevronL',18)} Yönetim</button><div class="h1" style="margin-top:8px">Hakediş</div><div class="subline">Hoca ödemeleri · ${MONF[d.getMonth()]} ${d.getFullYear()}</div></div></div>
   <div class="weeknav"><button class="navbtn" onclick="repMonthShift(-1)">${ic('chevronL',20)}</button>
     <div class="wncenter"><div class="wnrange">${MONF[d.getMonth()]}</div><div class="wnmonth">${d.getFullYear()}</div></div>
     <button class="navbtn" ${S.repMonth===0?'disabled':''} onclick="repMonthShift(1)">${ic('chevronR',20)}</button></div>
@@ -1101,7 +1162,7 @@ function renderReports(){
   const g={given:pr.reduce((a,r)=>a+r.count,0), cancel:S.requests.filter(r=>r.status==='cancelled'&&inM(r)).length};
   const counts={}; S.requests.filter(x=>x.status==='approved'||x.status==='pending').forEach(x=>counts[x.hour]=(counts[x.hour]||0)+1);
   const hs=Object.entries(counts).map(([h,c])=>[+h,c]).sort((a,b)=>b[1]-a[1]).slice(0,5); const hmax=Math.max(1,...hs.map(x=>x[1]));
-  return `<div class="appbar"><div><div class="eyebrow">Raporlar</div><div class="h1">Performans</div></div></div>
+  return `<div class="appbar"><div><button class="backbtn" onclick="goHub()">${ic('chevronL',18)} Yönetim</button><div class="h1" style="margin-top:8px">Performans</div><div class="subline">Ders ve iptal dağılımı</div></div></div>
   <div class="weeknav"><button class="navbtn" onclick="repMonthShift(-1)">${ic('chevronL',20)}</button>
     <div class="wncenter"><div class="wnrange">${MONF[d.getMonth()]}</div><div class="wnmonth">${d.getFullYear()}</div></div>
     <button class="navbtn" ${S.repMonth===0?'disabled':''} onclick="repMonthShift(1)">${ic('chevronR',20)}</button></div>
@@ -1116,7 +1177,7 @@ function renderReports(){
 }
 function renderMembers(){
   if(S.adminMember) return renderMemberDetail(S.adminMember);
-  return `<div class="appbar"><div><div class="eyebrow">Yönetim</div><div class="h1">Üyeler</div><div class="subline">${S.roster.length} üye · dokunup düzenle</div></div></div>
+  return `<div class="appbar"><div><button class="backbtn" onclick="goHub()">${ic('chevronL',18)} Yönetim</button><div class="h1" style="margin-top:8px">Üyeler</div><div class="subline">${S.roster.length} üye · dokunup düzenle</div></div></div>
   <div class="searchbar">${ic('search',18)}<input placeholder="İsimle ara…" value="${(S.memberSearch||'').replace(/"/g,'&quot;')}" oninput="filterMembers(this.value)"></div>
   <div id="memberList" style="display:flex;flex-direction:column;gap:10px">${memberListHTML()}</div>`;
 }
@@ -1147,13 +1208,13 @@ function renderMemberDetail(id){
 
 /* ===== TABBAR ===== */
 function renderTabs(){
-  const pend=pendingFor(curTrainer()).length+changeReqs(curTrainer()).length; const pendAll=S.requests.filter(r=>r.status==='pending'||(r.status==='approved'&&r.pending2)).length;
+  if(S.role==='admin') return ''; // yönetim alanı kendi içinde geziliyor
+  const pend=pendingFor(curTrainer()).length+changeReqs(curTrainer()).length;
   const defs={ student:[['home','home','Ana'],['book','calendar','Ders Al'],['package','ticket','Paketim'],['notifs','bell','Bildirim']],
-    trainer:[['agenda','calendar','Takvim'],['students','users','Öğrenciler'],['avail','slider','Saatlerim'],['notifs','bell','Bildirim']],
-    admin:[['panel','building','Panel'],['members','users','Üyeler'],['trainers','calendar','Hocalar'],['reports','chart','Rapor']] }[S.role];
+    trainer:[['agenda','calendar','Takvim'],['students','users','Öğrenciler'],['avail','slider','Saatlerim'],['notifs','bell','Bildirim']] }[S.role];
   const cur=S.screen[S.role];
   return `<div class="tabbar">${defs.map(x=>{ const on=cur===x[0]||(x[0]==='reports'&&cur==='payroll');
-    const n=(S.role==='trainer'&&x[0]==='notifs')?pend:((S.role==='admin'&&x[0]==='trainers')?pendAll:0);
+    const n=(S.role==='trainer'&&x[0]==='notifs')?pend:0;
     const badge=n?`<span class="badge">${n}</span>`:'';
     return `<button class="tb ${on?'on':''}" onclick="go('${x[0]}')"><span class="tbi">${ic(x[1],21)}${badge}</span><span>${x[2]}</span></button>`; }).join('')}</div>`;
 }
