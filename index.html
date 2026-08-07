@@ -276,6 +276,10 @@
   .searchbar svg{ width:18px;height:18px; color:var(--ink-3); flex:none; }
   .searchbar input{ border:none; background:none; outline:none; font-size:16px; color:var(--ink); width:100%; }
   .addhint{ margin-left:auto; color:var(--accent); font-weight:700; font-size:11px; }
+  .wabtn{ display:inline-flex; align-items:center; gap:6px; flex:none; padding:8px 11px; border-radius:10px;
+    background:var(--ok-bg); color:var(--ok); font-size:12px; font-weight:700; text-decoration:none; transition:.16s ease; }
+  .wabtn svg{ width:15px; height:15px; }
+  .wabtn:active{ transform:scale(.95); }
   .lesdel{ width:28px;height:28px;border-radius:8px; display:flex;align-items:center;justify-content:center; color:var(--ink-3); flex:none; }
   .lesdel:active{ background:var(--stop-bg); color:var(--stop); }
   .lesdel svg{ width:15px;height:15px; }
@@ -396,7 +400,7 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v12';
+const KEY='pt_studio_v13';
 const BASE_TRAINERS=[{id:'t0',name:'Ramazan Haktan Tatar',initials:'RT',owner:true},
   {id:'t1',name:'Burak Hoca',initials:'BH'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
   {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
@@ -502,22 +506,30 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:`${trs[1].name} · Salı 10:00`,when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:`${trs[2].name} · onay bekliyor`,when:'dün'},
   ];
-  return {v:12, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  return {v:13, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
-    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', memberFilter:'all', addSlot:null, addSearch:'', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
+    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', memberFilter:'all', addSlot:null, addSearch:'', trStudentSearch:'', trStudent:null, adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
     formSheet:null, nt:{name:'',phone:'',pass:'1234',rate:50}, ns:{name:'',phone:'',pass:'1234',trainers:[],rates:{},lessons:8,months:2,price:9600}, outbox:[],
     session:null, authForm:{phone:'',pass:'',err:''}, npForm:{p1:'',p2:'',err:''}, ownerView:'admin',
     roster, requests, availability, rates, trainers:trs, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==12) S=seed(); }catch(e){ S=seed(); }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==13) S=seed(); }catch(e){ S=seed(); }
   if(!S.trainers||!S.trainers.length) S.trainers=BASE_TRAINERS.map(t=>({...t}));
   TRAINERS=S.trainers; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 /* ---------- kimlik / oturum ---------- */
 function normPhone(p){ let d=String(p||'').replace(/\D/g,''); if(d.length>10&&d.startsWith('90')) d=d.slice(2); if(d.length>10&&d.startsWith('0')) d=d.slice(1); if(d.length===11&&d.startsWith('0')) d=d.slice(1); return d; }
 function fmtPhone(p){ const d=normPhone(p); if(d.length!==10) return p||''; return `0${d.slice(0,3)} ${d.slice(3,6)} ${d.slice(6,8)} ${d.slice(8)}`; }
+const telHref=p=>'tel:+90'+normPhone(p);
+const waHref=p=>'https://wa.me/90'+normPhone(p);
+/* telefon satırı: dokunulunca aranabilir, yanında WhatsApp kısayolu */
+function phoneRow(p,alt){ const ok=normPhone(p).length===10;
+  if(!ok) return `<div class="row"><div class="ic">${ic('phone',18)}</div><div class="grow"><div class="t mono">—</div><div class="d">${alt||'Telefon kayıtlı değil'}</div></div></div>`;
+  return `<div class="row"><a class="ic acc" href="${telHref(p)}" title="Ara">${ic('phone',18)}</a>
+    <a class="grow" href="${telHref(p)}" style="text-decoration:none;color:inherit"><div class="t mono">${fmtPhone(p)}</div><div class="d">${alt||'Dokun · ara'}</div></a>
+    <a class="wabtn" href="${waHref(p)}" target="_blank" rel="noopener" title="WhatsApp">${ic('phone',16)}<span>WhatsApp</span></a></div>`; }
 function findUser(phone){ const p=normPhone(phone); if(!p) return null;
   const t=(S.trainers||[]).find(x=>normPhone(x.phone)===p); if(t) return {kind:t.owner?'admin':'trainer', id:t.id, rec:t};
   const s=(S.roster||[]).find(x=>normPhone(x.phone)===p); if(s) return {kind:'student', id:s.id, rec:s};
@@ -796,7 +808,8 @@ function addStudentToSlot(id){ const T=curTrainer(); const sel=trWeek()[S.dayOff
   waStudent(id,`Sayın ${s.name}, ${trainer(T).name} ile ${DOW[sel.getDay()]} ${fmtShort(iso(sel))} saat ${hh(hr)} dersiniz tanımlanmıştır. Kalan ders hakkınız: ${s.pkg.lessons-s.pkg.used}.`,'onay');
   S.addSlot=null; save(); render(); toast(`${s.name.split(' ')[0]} · ${hh(hr)} eklendi · kotadan düşüldü`); }
 function addListHTML(){ const q=(S.addSearch||'').toLocaleLowerCase('tr');
-  const list=studentsOf(curTrainer()).filter(s=>s.name.toLocaleLowerCase('tr').includes(q));
+  const list=studentsOf(curTrainer()).filter(s=>s.name.toLocaleLowerCase('tr').includes(q))
+    .sort((a,b)=>a.name.localeCompare(b.name,'tr'));
   if(!list.length) return `<div class="empty">Eşleşen öğrenci yok</div>`;
   return list.map(s=>{ const rem=s.pkg.lessons-s.pkg.used, full=rem<=0;
     return `<div class="pickrow ${full?'dis':''}" ${full?'':`onclick="addStudentToSlot('${s.id}')"`}><div class="mono-av ${full?'stop':''}">${s.initials}</div><div class="grow"><div class="t">${s.name}</div><div class="d mono">${rem}/${s.pkg.lessons} ders kaldı</div></div>${full?'<span class="tag stop">Dolu</span>':`<span class="tag ok">Ekle</span>`}</div>`; }).join(''); }
@@ -807,7 +820,7 @@ function addSheet(){ if(!S.addSlot) return ''; const sel=trWeek()[S.dayOffset];
     <div class="sheet-list" id="addList">${addListHTML()}</div></div></div>`; }
 
 /* nav */
-function go(s){ S.screen[S.role]=s; S.adminMember=null; save(); render(); }
+function go(s){ S.screen[S.role]=s; S.adminMember=null; S.trStudent=null; save(); render(); }
 function trWeekShift(d){ S.trWeek+=d; save(); render(); }
 function bookWeekShift(d){ S.bookWeek=Math.max(0,S.bookWeek+d); S.bookHour=null; save(); render(); }
 function repMonthShift(d){ S.repMonth=Math.min(0,S.repMonth+d); save(); render(); }
@@ -1093,9 +1106,42 @@ function availBody(){
   <div class="availhead"><span class="sect" style="margin:0">Ders saatleri</span><span class="availsum mono">${ranges.length?ranges.map(r=>`${hh(r[0])}–${hh(r[1])}`).join('  ·  '):'Kapalı'}</span></div>
   <div class="hourgrid">${Array.from({length:17},(_,i)=>7+i).map(h=>`<div class="hourcell ${open.includes(h)?'on':''}" onclick="avToggle(${h})">${hh(h)}</div>`).join('')}</div>`;
 }
-function renderTrStudents(){ const T=curTrainer(); const tr=trainer(T)||{name:'',initials:''}; const list=studentsOf(T);
-  return `<div class="appbar"><div><div class="eyebrow">New U Sport Center</div><div class="h1">Öğrencilerim</div><div class="subline">Sana tanımlı ${list.length} öğrenci</div></div></div>
-  ${list.map(s=>{ const p=s.pkg; const e=pkgEnded(p); return `<div class="row"><div class="mono-av ${e?'stop':''}">${s.initials}</div><div class="grow"><div class="t">${s.name}</div><div class="d mono">${p.lessons-p.used}/${p.lessons} ders kaldı · ${daysLeft(p.endISO)} gün</div></div><span class="tag ${e?'stop':'ok'}">${e?'Doldu':'Aktif'}</span></div>`; }).join('')}`;
+function filterTrStudents(v){ S.trStudentSearch=v; save(); const el=document.getElementById('trStList'); if(el) el.innerHTML=trStudentsHTML(); }
+function trStudentsHTML(){ const T=curTrainer();
+  const q=(S.trStudentSearch||'').toLocaleLowerCase('tr').trim();
+  const qTel=q.replace(/\D/g,'').replace(/^0+/,'');
+  const list=studentsOf(T)
+    .filter(s=>!q||s.name.toLocaleLowerCase('tr').includes(q)||(qTel&&normPhone(s.phone).includes(qTel)))
+    .sort((a,b)=>a.name.localeCompare(b.name,'tr'));
+  if(!list.length) return `<div class="empty">Eşleşen öğrenci yok</div>`;
+  return list.map(s=>{ const p=s.pkg, e=pkgEnded(p), az=!e&&(p.lessons-p.used)<=2;
+    const sonraki=S.requests.filter(r=>r.studentId===s.id&&r.trainerId===T&&r.status==='approved'&&r.dateISO>=iso(new Date()))
+      .sort((a,b)=>(a.dateISO+pad(a.hour)).localeCompare(b.dateISO+pad(b.hour)))[0];
+    return `<div class="row" style="cursor:pointer" onclick="openTrStudent('${s.id}')"><div class="mono-av ${e?'stop':''}">${s.initials}</div>
+      <div class="grow"><div class="t">${s.name}</div><div class="d mono">${p.lessons-p.used}/${p.lessons} ders kaldı${sonraki?` · sıradaki ${fmtShort(sonraki.dateISO)} ${hh(sonraki.hour)}`:' · planlı ders yok'}</div></div>
+      <span class="tag ${e?'stop':az?'wait':'ok'}">${e?'Doldu':az?'Az kaldı':'Aktif'}</span><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`; }).join(''); }
+function openTrStudent(id){ S.trStudent=id; save(); render(); }
+function closeTrStudent(){ S.trStudent=null; save(); render(); }
+function renderTrStudentDetail(id){
+  const T=curTrainer(), s=member(id); if(!s){ S.trStudent=null; return renderTrStudents(); }
+  const p=s.pkg, e=pkgEnded(p);
+  const dersler=S.requests.filter(r=>r.studentId===id&&r.trainerId===T&&(r.status==='approved'||r.status==='pending'))
+    .sort((a,b)=>(b.dateISO+pad(b.hour)).localeCompare(a.dateISO+pad(a.hour)));
+  const bugun=iso(new Date());
+  const gelecek=dersler.filter(r=>r.dateISO>=bugun).reverse(), gecmis=dersler.filter(r=>r.dateISO<bugun).slice(0,6);
+  return `<div class="appbar"><div><button class="backbtn" onclick="closeTrStudent()">${ic('chevronL',18)} Öğrencilerim</button><div class="h1" style="margin-top:8px">${s.name}</div></div><div class="mono-av ${e?'stop':''}" style="width:44px;height:44px;border-radius:13px;font-size:15px">${s.initials}</div></div>
+  <div class="stat2"><div class="stat"><div class="n" style="color:${e?'var(--stop)':'var(--accent)'}">${p.lessons-p.used}</div><div class="l">Kalan ders</div></div>
+    <div class="stat"><div class="n">${daysLeft(p.endISO)}<span class="u"> gün</span></div><div class="l">Süre kaldı</div></div></div>
+  ${phoneRow(s.phone)}
+  <div class="sect">Yaklaşan dersler</div>
+  ${gelecek.length?gelecek.map(r=>`<div class="row"><div class="ic ${r.status==='pending'?'wait':'acc'}">${ic('dumbbell',18)}</div><div class="grow"><div class="t mono">${DOW[new Date(String(r.dateISO)+'T00:00:00').getDay()]} ${fmtShort(r.dateISO)} · ${hh(r.hour)}</div><div class="d">${r.status==='pending'?'Onay bekliyor':'Onaylı'}</div></div><span class="tag ${r.status==='pending'?'wait':'ok'}">${r.status==='pending'?'Bekliyor':'Onaylı'}</span></div>`).join(''):`<div class="row"><div class="ic">${ic('calendar',18)}</div><div class="grow"><div class="t">Planlı ders yok</div><div class="d">Takvimden boş saate ekleyebilirsin</div></div></div>`}
+  ${gecmis.length?`<div class="sect">Son dersler</div>`+gecmis.map(r=>`<div class="row"><div class="ic ok">${ic('check',18)}</div><div class="grow"><div class="t mono">${DOW[new Date(String(r.dateISO)+'T00:00:00').getDay()]} ${fmtShort(r.dateISO)} · ${hh(r.hour)}</div><div class="d">Yapıldı</div></div></div>`).join(''):''}`;
+}
+function renderTrStudents(){ const T=curTrainer(); const list=studentsOf(T);
+  if(S.trStudent) return renderTrStudentDetail(S.trStudent);
+  return `<div class="appbar"><div><div class="eyebrow">New U Sport Center</div><div class="h1">Öğrencilerim</div><div class="subline">Sana tanımlı ${list.length} öğrenci · alfabetik</div></div></div>
+  <div class="searchbar">${ic('search',18)}<input placeholder="İsim veya telefon ara…" value="${(S.trStudentSearch||'').replace(/"/g,'&quot;')}" oninput="filterTrStudents(this.value)"></div>
+  <div id="trStList" style="display:flex;flex-direction:column;gap:10px">${trStudentsHTML()}</div>`;
 }
 
 /* ===== YÖNETİCİ ===== */
@@ -1323,7 +1369,8 @@ function renderMemberDetail(id){
     <div class="stat"><div class="n">${daysLeft(p.endISO)}<span class="u"> gün</span></div><div class="l">Süre kaldı</div></div></div>
   <div class="row"><div class="ic">${ic('ticket',18)}</div><div class="grow"><div class="t mono">${p.lessons} ders · ${p.months} ay</div><div class="d">${fmtShort(p.startISO)} – ${fmtShort(p.endISO)} · ${p.used}/${p.lessons} kullanıldı</div></div><span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span></div>
   <div class="row"><div class="ic acc">${ic('chart',18)}</div><div class="grow"><div class="t mono">${tl(p.price||0)}</div><div class="d">Ders başı ${tl(perLesson(p))} · hoca hakedişi bu tutardan hesaplanır</div></div></div>
-  <div class="row"><div class="ic">${ic('phone',18)}</div><div class="grow"><div class="t mono">${fmtPhone(s.phone)||'—'}</div><div class="d">Giriş anahtarı${s.mustChange?' · ilk giriş bekleniyor':''}</div></div><button class="btn ghost sm" style="width:auto;padding:9px 12px" onclick="resetPass('${s.id}')">Şifre sıfırla</button></div>
+  ${phoneRow(s.phone,'Dokun · ara'+(s.mustChange?' · ilk giriş bekleniyor':''))}
+  <button class="btn ghost sm" onclick="resetPass('${s.id}')">${ic('lock',16)} Şifre sıfırla</button>
   <div class="sect">Hocaları · pay oranı</div>
   ${s.trainers.map(tid=>`<div class="row"><div class="mono-av" style="width:34px;height:34px;border-radius:11px;font-size:12px">${trainer(tid).initials}</div><div class="grow"><div class="t">${trainer(tid).name}</div><div class="d">Bu öğrenciden alıyor</div></div><span class="tag ${(s.trainerRates||{})[tid]!==undefined&&s.trainerRates[tid]!==rateOf(tid)?'wait':'mut'}">%${rateFor(s,tid)}</span></div>`).join('')}
   <div class="sect">Hızlı işlem</div>
