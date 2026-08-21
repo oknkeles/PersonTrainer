@@ -1020,6 +1020,7 @@ function renderTrainer(){
   const sc=S.screen.trainer; const T=curTrainer(); const tr=trainer(T)||{name:'',initials:''};
   const ab=(title,sub)=>`<div class="appbar"><div><div class="eyebrow">New U Sport Center</div><div class="h1">${title}</div>${sub?`<div class="subline">${sub}</div>`:''}</div></div>`;
   if(sc==='avail') return ab('Müsaitlik','Gün seç, ders vereceğin saatleri aç')+availBody();
+  if(sc==='report') return ab('Ders raporum','Ay bazında öğrenci dökümü')+trainerLessonReport(T);
   if(sc==='students') return renderTrStudents();
   if(sc==='notifs'){ const blok=pendBlock();
     return ab('Bildirimler')+(blok||`<div class="row"><div class="ic ok">${ic('check',18)}</div><div class="grow"><div class="t">Her şey güncel</div><div class="d">Onay bekleyen talebin yok</div></div></div>`); }
@@ -1638,7 +1639,7 @@ function renderTabs(){
   if(S.role==='admin') return ''; // yönetim alanı kendi içinde geziliyor
   const pend=pendingFor(curTrainer()).length+changeReqs(curTrainer()).length;
   const defs={ student:[['home','home','Ana'],['book','calendar','Ders Al'],['package','ticket','Paketim'],['notifs','bell','Bildirim']],
-    trainer:[['agenda','calendar','Takvim'],['students','users','Öğrenciler'],['notifs','bell','Bildirim']] }[S.role];
+    trainer:[['agenda','calendar','Takvim'],['students','users','Öğrenciler'],['report','chart','Rapor'],['notifs','bell','Bildirim']] }[S.role];
   const cur=S.screen[S.role];
   return `<div class="tabbar">${defs.map(x=>{ const on=cur===x[0]||(x[0]==='reports'&&cur==='payroll');
     const n=(S.role==='trainer'&&x[0]==='notifs')?pend:0;
