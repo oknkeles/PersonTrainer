@@ -400,7 +400,7 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v14';
+const KEY='pt_studio_v15';
 const BASE_TRAINERS=[{id:'t0',name:'Ramazan Haktan Tatar',initials:'RT',owner:true},
   {id:'t1',name:'Burak Hoca',initials:'BH'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
   {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
@@ -506,16 +506,16 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:`${trs[1].name} · Salı 10:00`,when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:`${trs[2].name} · onay bekliyor`,when:'dün'},
   ];
-  return {v:14, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  return {v:15, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
-    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', memberFilter:'all', addSlot:null, addSearch:'', trStudentSearch:'', trStudent:null, fx:null, tr:null, adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
+    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', memberFilter:'all', addSlot:null, addSearch:'', trStudentSearch:'', trStudent:null, fx:null, tr:null, fxWeek:0, trWeekOff:0, adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
     formSheet:null, nt:{name:'',phone:'',pass:'1234',rate:50}, ns:{name:'',phone:'',pass:'1234',trainers:[],rates:{},lessons:8,months:2,price:9600}, outbox:[],
     session:null, authForm:{phone:'',pass:'',err:''}, npForm:{p1:'',p2:'',err:''}, ownerView:'admin',
     roster, requests, availability, rates, trainers:trs, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==14) S=seed(); }catch(e){ S=seed(); }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==15) S=seed(); }catch(e){ S=seed(); }
   if(!S.trainers||!S.trainers.length) S.trainers=BASE_TRAINERS.map(t=>({...t}));
   TRAINERS=S.trainers; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
@@ -1163,9 +1163,6 @@ function renderAdminPanel(){
   const pr=payroll(0);
   const bekleyen=S.requests.filter(r=>r.status==='pending'||(r.status==='approved'&&r.pending2)).length;
   const suresiDolan=S.roster.filter(s=>pkgEnded(s.pkg)).length;
-  const bugun=iso(new Date());
-  const denemeler=S.requests.filter(r=>r.trial&&r.status==='approved'&&r.dateISO>=bugun)
-    .sort((a,b)=>(a.dateISO+pad(a.hour)).localeCompare(b.dateISO+pad(b.hour)));
   const ilkGirisHoca=TRAINERS.filter(x=>x.mustChange).length;
   const ilkGirisUye=S.roster.filter(x=>x.mustChange).length;
   const card=(act,icon,title,count,desc,fn)=>`<button class="hubcard ${act?'act':''}" onclick="${fn}">
@@ -1173,8 +1170,7 @@ function renderAdminPanel(){
     <span class="hb"><span class="hh"><span class="ht">${title}</span><span class="hc">${count}</span></span><span class="hd">${desc}</span></span></button>`;
   return `<div class="appbar"><div><div class="eyebrow">New U Sport Center</div><div class="h1">Yönetim</div><div class="subline">Tanımlamalar, takvimler ve raporlar</div></div></div>
   <div class="hubwrap">
-    ${(bekleyen||suresiDolan||denemeler.length)?`<div class="hubsec"><span>Dikkat gerektiren</span></div><div class="hubgrid">
-      ${denemeler.length?`<button class="hubcard" style="background:var(--accent-soft);border-color:transparent" onclick="go('trainers')"><span class="hi" style="background:rgba(255,255,255,.55);color:var(--accent)">${ic('plus',19)}</span><span class="hb"><span class="hh"><span class="ht" style="color:var(--accent-ink)">${denemeler.length} deneme dersi yaklaşıyor</span></span><span class="hd">${denemeler.slice(0,2).map(r=>`${r.studentName} · ${DOW[new Date(String(r.dateISO)+'T00:00:00').getDay()]} ${fmtShort(r.dateISO)} ${hh(r.hour)}`).join(' · ')}${denemeler.length>2?` · +${denemeler.length-2} kişi`:''}</span></span></button>`:''}
+    ${(bekleyen||suresiDolan)?`<div class="hubsec"><span>Dikkat gerektiren</span></div><div class="hubgrid">
       ${bekleyen?`<button class="hubcard" style="background:var(--wait-bg);border-color:transparent" onclick="go('trainers')"><span class="hi" style="background:rgba(255,255,255,.5);color:var(--wait)">${ic('clock',19)}</span><span class="hb"><span class="hh"><span class="ht" style="color:var(--wait)">${bekleyen} talep onay bekliyor</span></span><span class="hd">Hoca takvimlerinden onayla veya reddet</span></span></button>`:''}
       ${suresiDolan?`<button class="hubcard" style="background:var(--stop-bg);border-color:transparent" onclick="go('members')"><span class="hi" style="background:rgba(255,255,255,.5);color:var(--stop)">${ic('alert',19)}</span><span class="hb"><span class="hh"><span class="ht" style="color:var(--stop)">${suresiDolan} üyenin paketi bitti</span></span><span class="hd">Paketlerini yenile ki ders alabilsinler</span></span></button>`:''}
     </div>`:''}
@@ -1257,9 +1253,12 @@ function addStudent(){ const f=S.ns; const name=(f.name||'').trim();
   const now=new Date(); now.setHours(12,0,0,0);
   const lessons=Math.max(1,parseInt(f.lessons)||1), months=Math.max(1,parseInt(f.months)||1), price=Math.max(0,parseInt(f.price)||0);
   const trRates={}; f.trainers.forEach(id=>{ const v=(f.rates||{})[id]; trRates[id]=(v!==undefined?Math.max(0,Math.min(100,parseInt(v)||0)):rateOf(id)); });
-  S.roster.push({id:'s'+Date.now(),name,initials:initialsOf(name),phone:fmtPhone(f.phone),pass:String(f.pass),mustChange:true,trainers:[...f.trainers],trainerRates:trRates,
+  const yeniId='s'+Date.now();
+  S.roster.push({id:yeniId,name,initials:initialsOf(name),phone:fmtPhone(f.phone),pass:String(f.pass),mustChange:true,trainers:[...f.trainers],trainerRates:trRates,
     pkg:{lessons,months,used:0,price,startISO:iso(now),endISO:iso(addDays(now,months*30))}});
-  S.formSheet=null; save(); render(); toast(`${name} eklendi · geçici şifre: ${f.pass}`); }
+  S.formSheet=null; S.screen.admin='members';
+  openMember(yeniId);   // programını hemen tanımlayabilsin diye detayına geç
+  toast(`${name} eklendi · şimdi programını tanımlayabilirsin`); }
 function formSheet(){ if(!S.formSheet) return '';
   if(S.formSheet==='profile') return profileSheet();
   if(S.formSheet==='outbox') return outboxSheet();
@@ -1297,113 +1296,101 @@ function renderAdminTrainers(){
   const appbar=`<div class="appbar"><div><button class="backbtn" onclick="goHub()">${ic('chevronL',18)} Yönetim</button><div class="h1" style="margin-top:8px">${trainer(T).name}</div><div class="subline">Takvimini yönet · ders sil/kaydır/ekle · onayla</div></div></div>`;
   const picker=`<div class="sect" style="margin-top:2px">Hoca</div><div class="row" style="cursor:pointer" onclick="openTrPick()"><div class="mono-av">${trainer(T).initials}</div><div class="grow"><div class="t">${trainer(T).name}</div><div class="d">${TRAINERS.length} hoca · değiştirmek için dokun</div></div><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`;
   const modes=`<div class="toggle"><button class="${!av?'on':''}" onclick="setAdminAvail(false)">Takvim</button><button class="${av?'on':''}" onclick="setAdminAvail(true)">Müsaitlik</button></div>`;
-  const aksiyon=av?'':`<div class="btnrow" style="margin-top:2px">
-    <button class="btn ghost sm" onclick="openFix()">${ic('refresh',16)} Fiks ders</button>
-    <button class="btn ghost sm" onclick="openTrial()">${ic('plus',16)} Deneme dersi</button></div>`;
-  return appbar+picker+modes+aksiyon+(av?availBody():agendaBody());
+  return appbar+picker+modes+(av?availBody():agendaBody());
 }
 
-/* ---------- fiks (sabit) ders: seçilen günlerde N hafta boyunca aynı saat ---------- */
-function openFix(){ S.fx={sid:null,days:[],hour:null,weeks:4,search:''}; S.formSheet='fix'; save(); render(); }
-function fxPickStudent(id){ S.fx.sid=id; save(); render(); }
+/* ---------- üyeye ait program tanımları: fiks ders + tanışma dersi ----------
+   İkisi de üye kaydının parçası; üye detayından tanımlanır. */
+const fxWeek=()=>weekDatesFrom(S.fxWeek||0);
+function openFix(sid){ const s=member(sid); if(!s) return;
+  S.fx={sid,tid:s.trainers[0]||'t1',days:[],hour:null,weeks:4}; S.fxWeek=0; S.formSheet='fix'; save(); render(); }
+function fxSetTrainer(id){ S.fx.tid=id; S.fx.days=[]; S.fx.hour=null; save(); render(); }
 function fxToggleDay(d){ const a=S.fx.days, i=a.indexOf(d); if(i>=0)a.splice(i,1); else a.push(d); S.fx.hour=null; save(); render(); }
 function fxSetHour(h){ S.fx.hour=h; save(); render(); }
 function fxSetWeeks(w){ S.fx.weeks=w; save(); render(); }
-function fxSearch(v){ S.fx.search=v; const el=document.getElementById('fxList'); if(el) el.innerHTML=fxListHTML(); }
-function fxListHTML(){ const q=(S.fx.search||'').toLocaleLowerCase('tr');
-  const list=S.roster.filter(s=>s.name.toLocaleLowerCase('tr').includes(q)).sort((a,b)=>a.name.localeCompare(b.name,'tr')).slice(0,40);
-  if(!list.length) return `<div class="empty">Eşleşen öğrenci yok</div>`;
-  return list.map(s=>{ const rem=s.pkg.lessons-s.pkg.used;
-    return `<div class="pickrow ${rem<=0?'dis':''}" ${rem<=0?'':`onclick="fxPickStudent('${s.id}')"`}><div class="mono-av ${rem<=0?'stop':''}">${s.initials}</div><div class="grow"><div class="t">${s.name}</div><div class="d mono">${rem}/${s.pkg.lessons} ders kaldı</div></div>${rem<=0?'<span class="tag stop">Dolu</span>':`<span class="tag ok">Seç</span>`}</div>`; }).join(''); }
 /* seçilen gün+saat için önümüzdeki haftalarda uygun tarihleri hesaplar */
-function fxPlan(){ const T=curTrainer(), f=S.fx; if(!f.sid||!f.days.length||f.hour==null) return {ok:[],cakisan:[]};
-  const s=member(f.sid), kalan=s.pkg.lessons-s.pkg.used, ok=[], cakisan=[];
+function fxPlan(){ const f=S.fx; if(!f||!f.sid||!f.days.length||f.hour==null) return {ok:[],cakisan:[],kalan:0};
+  const T=f.tid, s=member(f.sid), kalan=s.pkg.lessons-s.pkg.used, ok=[], cakisan=[];
   const bas=new Date(); bas.setHours(12,0,0,0);
   for(let w=0; w<f.weeks; w++){
     f.days.slice().sort().forEach(dw=>{
       if(ok.length>=kalan) return;
       let fark=(dw-bas.getDay()+7)%7; if(fark===0) fark=7;      // bugünden sonraki ilk o gün
       const d=addDays(bas,fark+w*7), dISO=iso(d);
-      if(!availHoursForDate(T,d).includes(f.hour)) { cakisan.push({dISO,sebep:'kapalı'}); return; }
-      if(activeReqs(T,dISO).some(r=>r.hour===f.hour)) { cakisan.push({dISO,sebep:'dolu'}); return; }
+      if(!availHoursForDate(T,d).includes(f.hour)) { cakisan.push(dISO); return; }
+      if(activeReqs(T,dISO).some(r=>r.hour===f.hour)) { cakisan.push(dISO); return; }
       ok.push(dISO);
     });
   }
   return {ok,cakisan,kalan}; }
-function fxApply(){ const T=curTrainer(), f=S.fx; const p=fxPlan();
+function fxApply(){ const f=S.fx, T=f.tid; const p=fxPlan();
   if(!p.ok.length){ toast('Uygun tarih bulunamadı'); return; }
   const s=member(f.sid);
   p.ok.forEach((dISO,i)=>{ S.requests.push({id:'fx'+Date.now()+'_'+i,trainerId:T,studentId:s.id,studentName:s.name,initials:s.initials,
     dateISO:dISO,hour:f.hour,status:'approved',fee:perLesson(s.pkg),rate:rateFor(s,T),fixed:true}); s.pkg.used++; });
-  if(!s.trainers.includes(T)) s.trainers.push(T);
   const gunler=f.days.slice().sort().map(d=>DOW[d]).join(', ');
-  S.notifs.unshift({icon:'calendar',t:'Fiks dersin tanımlandı',d:`${trainer(T).name} · ${gunler} ${hh(f.hour)}`,when:'şimdi'});
+  s.fixedPlan={tid:T,days:f.days.slice().sort(),hour:f.hour};
+  S.notifs.unshift({icon:'calendar',t:'Sabit programın tanımlandı',d:`${trainer(T).name} · ${gunler} ${hh(f.hour)}`,when:'şimdi'});
   waStudent(s.id,`Sayın ${s.name}, ${trainer(T).name} ile ${gunler} günleri saat ${hh(f.hour)} olmak üzere ${p.ok.length} dersiniz sabitlenmiştir. Kalan ders hakkınız: ${s.pkg.lessons-s.pkg.used}.`,'fiks');
   S.formSheet=null; save(); render();
-  toast(`${s.name.split(' ')[0]} · ${p.ok.length} fiks ders tanımlandı`+(p.cakisan.length?` · ${p.cakisan.length} tarih atlandı`:'')); }
-function fixSheet(){ const T=curTrainer(), f=S.fx||{};
-  const s=f.sid?member(f.sid):null;
-  const gunChip=d=>`<button class="fchip ${f.days.includes(d)?'on':''}" onclick="fxToggleDay(${d})">${DOW[d]}</button>`;
+  toast(`${s.name.split(' ')[0]} · ${p.ok.length} ders sabitlendi`+(p.cakisan.length?` · ${p.cakisan.length} tarih atlandı`:'')); }
+function fixSheet(){ const f=S.fx||{}; const s=f.sid?member(f.sid):null; if(!s) return '';
+  const T=f.tid;
   const acikGunler=[1,2,3,4,5,6,0].filter(d=>availHours(T,d).length);
-  // seçilen günlerin ortak saatleri
   const ortak=f.days.length?availHours(T,f.days[0]).filter(h=>f.days.every(d=>availHours(T,d).includes(h))):[];
   const plan=fxPlan();
   return `<div class="sheet-bg" data-close="closeForm"><div class="sheet">
-    <div class="sheet-h"><div><div class="eyebrow">${trainer(T).name}</div><div class="h1">Fiks ders</div></div><button class="sheet-x" onclick="closeForm()">${ic('x',18)}</button></div>
+    <div class="sheet-h"><div><div class="eyebrow">${s.name}</div><div class="h1">Sabit program</div></div><button class="sheet-x" onclick="closeForm()">${ic('x',18)}</button></div>
     <div class="sheet-list">
-      ${!s?`<div class="d" style="margin:0 0 8px">Sabit programa alınacak öğrenciyi seç</div>
-        <div class="searchbar" style="margin:0 0 8px">${ic('search',18)}<input placeholder="Öğrenci ara…" oninput="fxSearch(this.value)"></div>
-        <div id="fxList" style="display:flex;flex-direction:column;gap:8px">${fxListHTML()}</div>`
-      :`<div class="row"><div class="mono-av">${s.initials}</div><div class="grow"><div class="t">${s.name}</div><div class="d mono">${s.pkg.lessons-s.pkg.used} ders hakkı kaldı</div></div><button class="btn ghost sm" style="width:auto;padding:8px 12px" onclick="fxPickStudent(null)">Değiştir</button></div>
-        <div class="sect" style="margin:12px 1px 6px">Günler · birden fazla seçebilirsin</div>
-        <div class="fchips">${acikGunler.map(gunChip).join('')}</div>
-        ${f.days.length?`<div class="sect" style="margin:12px 1px 6px">Saat</div>
-          ${ortak.length?`<div class="slots">${ortak.map(h=>`<div class="slot ${f.hour===h?'sel':'free'}" onclick="fxSetHour(${h})">${hh(h)}</div>`).join('')}</div>`
-            :`<div class="empty">Seçtiğin günlerin ortak boş saati yok</div>`}`:''}
-        ${f.hour!=null?`<div class="sect" style="margin:12px 1px 6px">Süre</div>
-          <div class="fchips">${[4,8,12].map(w=>`<button class="fchip ${f.weeks===w?'on':''}" onclick="fxSetWeeks(${w})">${w} hafta</button>`).join('')}</div>
-          <div class="row" style="margin-top:12px;background:var(--surface-2);border-style:dashed"><div class="ic acc">${ic('calendar',18)}</div><div class="grow"><div class="t">${plan.ok.length} ders sabitlenecek</div><div class="d">${f.days.slice().sort().map(d=>DOW[d]).join(', ')} · ${hh(f.hour)}${plan.cakisan.length?` · ${plan.cakisan.length} tarih dolu/kapalı, atlanacak`:''}${plan.ok.length>=plan.kalan?' · ders hakkı kadar':''}</div></div></div>
-          <button class="btn" style="margin-top:10px" onclick="fxApply()" ${plan.ok.length?'':'disabled'}>${ic('check',18)} Fiks Dersi Tanımla</button>`:''}`}
+      <div class="d" style="margin:0 0 4px">Aynı gün ve saatte tekrar eden ders · ${s.pkg.lessons-s.pkg.used} ders hakkı var</div>
+      ${s.trainers.length>1?`<div class="sect" style="margin:10px 1px 6px">Hoca</div>
+        <div class="fchips">${s.trainers.map(id=>`<button class="fchip ${T===id?'on':''}" onclick="fxSetTrainer('${id}')">${trainer(id).name.split(' ')[0]}</button>`).join('')}</div>`:''}
+      <div class="sect" style="margin:12px 1px 6px">Günler · birden fazla seçebilirsin</div>
+      <div class="fchips">${acikGunler.map(d=>`<button class="fchip ${f.days.includes(d)?'on':''}" onclick="fxToggleDay(${d})">${DOW[d]}</button>`).join('')}</div>
+      ${f.days.length?`<div class="sect" style="margin:12px 1px 6px">Saat</div>
+        ${ortak.length?`<div class="slots">${ortak.map(h=>`<div class="slot ${f.hour===h?'sel':'free'}" onclick="fxSetHour(${h})">${hh(h)}</div>`).join('')}</div>`
+          :`<div class="empty">Seçtiğin günlerin ortak açık saati yok</div>`}`:''}
+      ${f.hour!=null?`<div class="sect" style="margin:12px 1px 6px">Süre</div>
+        <div class="fchips">${[4,8,12].map(w=>`<button class="fchip ${f.weeks===w?'on':''}" onclick="fxSetWeeks(${w})">${w} hafta</button>`).join('')}</div>
+        <div class="row" style="margin-top:12px;background:var(--surface-2);border-style:dashed"><div class="ic acc">${ic('calendar',18)}</div><div class="grow"><div class="t">${plan.ok.length} ders sabitlenecek</div><div class="d">${f.days.slice().sort().map(d=>DOW[d]).join(', ')} · ${hh(f.hour)}${plan.cakisan.length?` · ${plan.cakisan.length} tarih dolu/kapalı, atlanacak`:''}${plan.ok.length>=plan.kalan?' · ders hakkı kadar':''}</div></div></div>
+        <button class="btn" style="margin-top:10px" onclick="fxApply()" ${plan.ok.length?'':'disabled'}>${ic('check',18)} Programı Tanımla</button>`:''}
     </div></div></div>`;
 }
 
-/* ---------- deneme dersi: üyeliği olmayan kişi için tek ders ---------- */
-function openTrial(){ const T=curTrainer(); const wk=trWeek()[S.dayOffset];
-  const bas=iso(wk)>=iso(new Date())?iso(wk):iso(new Date());   // geçmiş güne açma
-  S.tr={name:'',phone:'',dISO:bas,hour:null}; S.formSheet='trial'; save(); render(); }
+/* tanışma (deneme) dersi — üye başına bir kez, ücretsiz, kotadan düşmez */
+function openTrial(sid){ const s=member(sid); if(!s) return;
+  S.tr={sid,tid:s.trainers[0]||'t1',dISO:iso(new Date()),hour:null}; S.trWeekOff=0; S.formSheet='trial'; save(); render(); }
+function trSetTrainer(id){ S.tr.tid=id; S.tr.hour=null; save(); render(); }
 function trSetDay(dISO){ S.tr.dISO=dISO; S.tr.hour=null; save(); render(); }
 function trSetHour(h){ S.tr.hour=h; save(); render(); }
-function trApply(){ const T=curTrainer(), f=S.tr; const ad=(f.name||'').trim();
-  if(ad.length<2){ toast('Ad soyad gerekli'); return; }
-  if(normPhone(f.phone).length!==10){ toast('Geçerli telefon gir'); return; }
-  if(phoneTaken(f.phone)){ toast('Bu numara zaten kayıtlı'); return; }
+function trWeekShiftT(d){ S.trWeekOff=Math.max(0,(S.trWeekOff||0)+d); save(); render(); }
+function trApply(){ const f=S.tr, T=f.tid, s=member(f.sid); if(!s) return;
   if(f.hour==null){ toast('Saat seç'); return; }
-  if(f.dISO<iso(new Date())){ toast('Geçmiş bir güne deneme dersi verilemez'); return; }
-  const now=new Date(); now.setHours(12,0,0,0);
-  const id='dn'+Date.now();
-  S.roster.push({id,name:ad,initials:initialsOf(ad),phone:fmtPhone(f.phone),pass:'1234',mustChange:true,trial:true,
-    trainers:[T],trainerRates:{[T]:rateOf(T)},
-    pkg:{lessons:1,months:1,used:1,price:0,startISO:iso(now),endISO:iso(addDays(now,30))}});
-  S.requests.push({id:'r'+Date.now(),trainerId:T,studentId:id,studentName:ad,initials:initialsOf(ad),
-    dateISO:f.dISO,hour:f.hour,status:'approved',fee:0,rate:rateOf(T),trial:true});
-  queueWA(f.phone,`Sayın ${ad}, New U Sport Center deneme dersiniz ${trainer(T).name} ile ${DOW[new Date(String(f.dISO)+'T00:00:00').getDay()]} ${fmtShort(f.dISO)} saat ${hh(f.hour)} olarak planlanmıştır. Görüşmek üzere!`,{kind:'deneme'});
-  S.formSheet=null; save(); render(); toast(`${ad.split(' ')[0]} · deneme dersi ${fmtShort(f.dISO)} ${hh(f.hour)}`); }
-function trialSheet(){ const T=curTrainer(), f=S.tr||{};
-  const week=trWeek(); const selD=new Date(String(f.dISO)+'T12:00:00');
-  const bos=freeHours(T,selD);
+  if(f.dISO<iso(new Date())){ toast('Geçmiş bir güne tanışma dersi verilemez'); return; }
+  if(activeReqs(T,f.dISO).some(r=>r.hour===f.hour)){ toast('Bu saat dolu'); return; }
+  S.requests.push({id:'dn'+Date.now(),trainerId:T,studentId:s.id,studentName:s.name,initials:s.initials,
+    dateISO:f.dISO,hour:f.hour,status:'approved',fee:0,rate:rateFor(s,T),trial:true});
+  s.trialUsed=true;
+  S.notifs.unshift({icon:'plus',t:'Tanışma dersin tanımlandı',d:`${trainer(T).name} · ${DOW[new Date(String(f.dISO)+'T00:00:00').getDay()]} ${hh(f.hour)}`,when:'şimdi'});
+  waStudent(s.id,`Sayın ${s.name}, ${trainer(T).name} ile tanışma dersiniz ${DOW[new Date(String(f.dISO)+'T00:00:00').getDay()]} ${fmtShort(f.dISO)} saat ${hh(f.hour)} olarak planlanmıştır. Görüşmek üzere!`,'tanışma');
+  S.formSheet=null; save(); render(); toast(`${s.name.split(' ')[0]} · tanışma dersi ${fmtShort(f.dISO)} ${hh(f.hour)}`); }
+function trialSheet(){ const f=S.tr||{}; const s=f.sid?member(f.sid):null; if(!s) return '';
+  const T=f.tid, week=weekDatesFrom(S.trWeekOff||0);
+  const selD=new Date(String(f.dISO)+'T12:00:00');
+  const bos=freeHours(T,selD).filter(h=>!(iso(selD)===iso(new Date())&&h<=new Date().getHours()));
   return `<div class="sheet-bg" data-close="closeForm"><div class="sheet">
-    <div class="sheet-h"><div><div class="eyebrow">${trainer(T).name}</div><div class="h1">Deneme dersi</div></div><button class="sheet-x" onclick="closeForm()">${ic('x',18)}</button></div>
+    <div class="sheet-h"><div><div class="eyebrow">${s.name}</div><div class="h1">Tanışma dersi</div></div><button class="sheet-x" onclick="closeForm()">${ic('x',18)}</button></div>
     <div class="sheet-list">
-      <div class="d" style="margin:0 0 6px">Üyeliği olmayan kişi için tek seferlik ders · kota düşmez, ücretsizdir</div>
-      <div class="field"><label>Ad Soyad</label><input type="text" value="${(f.name||'').replace(/"/g,'&quot;')}" oninput="S.tr.name=this.value" placeholder="Örn. Deniz Yıldız"></div>
-      <div class="field"><label>Telefon</label><input type="tel" inputmode="tel" value="${(f.phone||'').replace(/"/g,'&quot;')}" oninput="S.tr.phone=this.value" placeholder="05xx xxx xx xx"><span class="hint">Hatırlatma mesajı bu numaraya gider</span></div>
-      <div class="sect" style="margin:6px 1px">Gün</div>
-      <div class="days">${week.map(d=>{ const gecmis=iso(d)<iso(new Date()); const kapali=!availHoursForDate(T,d).length;
+      <div class="d" style="margin:0 0 4px">Üyeye bir kez tanımlanır · ücretsizdir, ders hakkından düşmez</div>
+      ${s.trainers.length>1?`<div class="sect" style="margin:10px 1px 6px">Hoca</div>
+        <div class="fchips">${s.trainers.map(id=>`<button class="fchip ${T===id?'on':''}" onclick="trSetTrainer('${id}')">${trainer(id).name.split(' ')[0]}</button>`).join('')}</div>`:''}
+      <div class="sect" style="margin:12px 1px 6px">Hafta</div>
+      ${weekNav(week,'trWeekShiftT(-1)','trWeekShiftT(1)',(S.trWeekOff||0)===0)}
+      <div class="days" style="margin-top:8px">${week.map(d=>{ const gecmis=iso(d)<iso(new Date()); const kapali=!availHoursForDate(T,d).length;
         return `<div class="day ${iso(d)===f.dISO?'on':''} ${(gecmis||kapali)?'off':''}" ${gecmis?'':`onclick="trSetDay('${iso(d)}')"`}>${DOW[d.getDay()]}<span class="n">${d.getDate()}</span></div>`; }).join('')}</div>
-      ${week.every(d=>iso(d)<iso(new Date()))?`<div class="d" style="margin:6px 2px 0;color:var(--stop)">Bu hafta geçmişte — takvimden ileri bir hafta seç</div>`:''}
-      <div class="sect" style="margin:12px 1px 6px">Boş saatler</div>
-      ${bos.length?`<div class="slots">${bos.map(h=>`<div class="slot ${f.hour===h?'sel':'free'}" onclick="trSetHour(${h})">${hh(h)}</div>`).join('')}</div>`:`<div class="empty">Bu gün boş saat yok</div>`}
-      <button class="btn" style="margin-top:12px" onclick="trApply()" ${f.hour==null?'disabled':''}>${ic('check',18)} Deneme Dersini Oluştur</button>
+      <div class="sect" style="margin:12px 1px 6px">Boş saatler · ${fmtDay(selD)}</div>
+      ${bos.length?`<div class="slots">${bos.map(h=>`<div class="slot ${f.hour===h?'sel':'free'}" onclick="trSetHour(${h})">${hh(h)}</div>`).join('')}</div>`:`<div class="empty">Bu gün boş saat yok — başka gün seç</div>`}
+      <button class="btn" style="margin-top:12px" onclick="trApply()" ${f.hour==null?'disabled':''}>${ic('check',18)} Tanışma Dersini Tanımla</button>
     </div></div></div>`;
 }
 function setAdminTrainer(id){ S.adminTrainer=id; save(); render(); }
@@ -1529,6 +1516,13 @@ function renderMemberDetail(id){
   <button class="btn ghost sm" onclick="resetPass('${s.id}')">${ic('lock',16)} Şifre sıfırla</button>
   <div class="sect">Hocaları · pay oranı</div>
   ${s.trainers.map(tid=>`<div class="row"><div class="mono-av" style="width:34px;height:34px;border-radius:11px;font-size:12px">${trainer(tid).initials}</div><div class="grow"><div class="t">${trainer(tid).name}</div><div class="d">Bu öğrenciden alıyor</div></div><span class="tag ${(s.trainerRates||{})[tid]!==undefined&&s.trainerRates[tid]!==rateOf(tid)?'wait':'mut'}">%${rateFor(s,tid)}</span></div>`).join('')}
+  <div class="sect">Ders programı</div>
+  ${s.fixedPlan?`<div class="row"><div class="ic acc">${ic('refresh',18)}</div><div class="grow"><div class="t">Sabit program · ${s.fixedPlan.days.map(x=>DOW[x]).join(', ')} ${hh(s.fixedPlan.hour)}</div><div class="d">${trainer(s.fixedPlan.tid).name} · takvimde "Fiks" olarak işaretli</div></div></div>`:''}
+  ${s.trialUsed?`<div class="row"><div class="ic ok">${ic('check',18)}</div><div class="grow"><div class="t">Tanışma dersi verildi</div><div class="d">Üye başına bir kez tanımlanır</div></div></div>`:''}
+  <div class="btnrow">
+    <button class="btn ghost sm" onclick="openFix('${id}')" ${e?'disabled':''}>${ic('refresh',16)} ${s.fixedPlan?'Programı yenile':'Sabit program'}</button>
+    ${!s.trialUsed?`<button class="btn ghost sm" onclick="openTrial('${id}')">${ic('plus',16)} Tanışma dersi</button>`:''}
+  </div>
   <div class="sect">Hızlı işlem</div>
   <div class="btnrow"><button class="btn ghost sm" onclick="extendMonths('${id}',1)">${ic('refresh',16)} Süre +1 Ay</button><button class="btn ghost sm" onclick="addLessons('${id}',4)">${ic('plus',16)} +4 Ders</button></div>
   <div class="sect">Yeni paket / hoca ata</div>
