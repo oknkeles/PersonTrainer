@@ -400,7 +400,7 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v15';
+const KEY='pt_studio_v16';
 const BASE_TRAINERS=[{id:'t0',name:'Ramazan Haktan Tatar',initials:'RT',owner:true},
   {id:'t1',name:'Burak Hoca',initials:'BH'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
   {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
@@ -488,9 +488,10 @@ function seed(){
   const rates={}; trs.forEach(t=>rates[t.id]=50); rates.t0=100; rates.t1=55; rates.t2=45;
   trs.forEach((t,i)=>{ t.phone='0532 100 00 '+pad(i); t.pass='1234'; t.mustChange=!(t.owner||t.id==='t1'); });
   roster.forEach((s,i)=>{ s.phone='0533 200 00 '+pad(i); s.pass='1234'; s.mustChange=(s.id!=='s1'); });
-  const own=trs.find(t=>t.id==='t0'); own.phone='0530 649 21 03'; own.pass='Aura2026'; own.mustChange=false;
-  const brk=trs.find(t=>t.id==='t1'); brk.phone='0530 378 98 84'; brk.pass='Haktan2026'; brk.mustChange=false;
-  const zk=roster.find(r=>r.id==='s1'); zk.phone='1234'; zk.pass='1234'; zk.mustChange=false;
+  // gerçek hesaplar + hızlı test için kısa giriş kodu (kod girilirse şifre de aynı koddur)
+  const own=trs.find(t=>t.id==='t0'); own.phone='0530 649 21 03'; own.pass='Aura2026'; own.mustChange=false; own.code='123456';
+  const brk=trs.find(t=>t.id==='t1'); brk.phone='0530 378 98 84'; brk.pass='Haktan2026'; brk.mustChange=false; brk.code='12345';
+  const zk=roster.find(r=>r.id==='s1'); zk.phone='1234'; zk.pass='1234'; zk.mustChange=false; zk.code='1234';
   // öğrenci bazlı pay oranı: varsayılan hocanın oranı, bazılarında özel
   roster.forEach(s=>{ s.trainerRates={}; s.trainers.forEach(id=>{ s.trainerRates[id]=rates[id]; }); });
   zk.trainerRates.t1=60; const et=roster.find(r=>r.id==='p1'); if(et) et.trainerRates.t1=40;
@@ -506,7 +507,7 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:`${trs[1].name} · Salı 10:00`,when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:`${trs[2].name} · onay bekliyor`,when:'dün'},
   ];
-  return {v:15, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  return {v:16, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
     def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', memberFilter:'all', addSlot:null, addSearch:'', trStudentSearch:'', trStudent:null, fx:null, tr:null, fxWeek:0, trWeekOff:0, adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
@@ -515,7 +516,7 @@ function seed(){
     roster, requests, availability, rates, trainers:trs, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==15) S=seed(); }catch(e){ S=seed(); }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==16) S=seed(); }catch(e){ S=seed(); }
   if(!S.trainers||!S.trainers.length) S.trainers=BASE_TRAINERS.map(t=>({...t}));
   TRAINERS=S.trainers; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
@@ -530,16 +531,20 @@ function phoneRow(p,alt){ const ok=normPhone(p).length===10;
   return `<div class="row"><a class="ic acc" href="${telHref(p)}" title="Ara">${ic('phone',18)}</a>
     <a class="grow" href="${telHref(p)}" style="text-decoration:none;color:inherit"><div class="t mono">${fmtPhone(p)}</div><div class="d">${alt||'Dokun · ara'}</div></a>
     <a class="wabtn" href="${waHref(p)}" target="_blank" rel="noopener" title="WhatsApp">${ic('phone',16)}<span>WhatsApp</span></a></div>`; }
-function findUser(phone){ const p=normPhone(phone); if(!p) return null;
-  const t=(S.trainers||[]).find(x=>normPhone(x.phone)===p); if(t) return {kind:t.owner?'admin':'trainer', id:t.id, rec:t};
-  const s=(S.roster||[]).find(x=>normPhone(x.phone)===p); if(s) return {kind:'student', id:s.id, rec:s};
+/* girişte hem gerçek telefon hem kısa test kodu kabul edilir */
+function findUser(phone){ const raw=String(phone||'').trim(); const p=normPhone(phone); if(!p&&!raw) return null;
+  const esles=x=>(x.code&&raw===x.code)||(p&&normPhone(x.phone)===p);
+  const t=(S.trainers||[]).find(esles); if(t) return {kind:t.owner?'admin':'trainer', id:t.id, rec:t};
+  const s=(S.roster||[]).find(esles); if(s) return {kind:'student', id:s.id, rec:s};
   return null; }
 function sessionUser(){ const s=S.session; if(!s) return null;
   const rec=s.kind==='student'?S.roster.find(r=>r.id===s.id):(S.trainers||[]).find(t=>t.id===s.id);
   return rec?{kind:s.kind,id:s.id,rec}:null; }
 function doLogin(){ const f=S.authForm; const u=findUser(f.phone);
   if(!u){ f.err='Bu telefon numarası kayıtlı değil'; save(); render(); return; }
-  if(String(u.rec.pass||'')!==String(f.pass||'')){ f.err='Şifre hatalı'; save(); render(); return; }
+  const raw=String(f.phone||'').trim(), gir=String(f.pass||'');
+  const kodlaGiris=u.rec.code&&raw===u.rec.code;              // kısa test kodu: şifre de kodun kendisi
+  if(gir!==String(u.rec.pass||'') && !(kodlaGiris&&gir===u.rec.code)){ f.err='Şifre hatalı'; save(); render(); return; }
   S.session={id:u.id,kind:u.kind}; S.role=u.kind; if(u.kind==='student') S.meId=u.id;
   // salon sahibi de bir hoca: girişte kendi takvimi açılır, yönetim ayrı bir alan
   if(u.kind==='admin'){ S.role='trainer'; S.ownerView='trainer'; S.screen.trainer='agenda'; }
