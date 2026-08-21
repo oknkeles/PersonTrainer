@@ -400,7 +400,7 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v16';
+const KEY='pt_studio_v17';
 const BASE_TRAINERS=[{id:'t0',name:'Ramazan Haktan Tatar',initials:'RT',owner:true},
   {id:'t1',name:'Burak Hoca',initials:'BH'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
   {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
@@ -507,16 +507,16 @@ function seed(){
     {icon:'check',t:'Dersin onaylandı',d:`${trs[1].name} · Salı 10:00`,when:'2s önce'},
     {icon:'clock',t:'Talebin alındı',d:`${trs[2].name} · onay bekliyor`,when:'dün'},
   ];
-  return {v:16, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  return {v:17, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
-    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', memberFilter:'all', addSlot:null, addSearch:'', trStudentSearch:'', trStudent:null, fx:null, tr:null, fxWeek:0, trWeekOff:0, adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
-    formSheet:null, nt:{name:'',phone:'',pass:'1234',rate:50}, ns:{name:'',phone:'',pass:'1234',trainers:[],rates:{},lessons:8,months:2,price:9600}, outbox:[],
+    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', memberFilter:'all', addSlot:null, addSearch:'', trStudentSearch:'', trStudent:null, fx:null, tr:null, fxWeek:0, trWeekOff:0, adminMode:'agenda', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
+    formSheet:null, nt:{name:'',phone:'',pass:'1234',rate:50}, ns:{name:'',phone:'',pass:'1234',trainers:[],rates:{},lessons:8,months:2,price:9600,trial:null}, outbox:[],
     session:null, authForm:{phone:'',pass:'',err:''}, npForm:{p1:'',p2:'',err:''}, ownerView:'admin',
     roster, requests, availability, rates, trainers:trs, log, notifs, mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==16) S=seed(); }catch(e){ S=seed(); }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==17) S=seed(); }catch(e){ S=seed(); }
   if(!S.trainers||!S.trainers.length) S.trainers=BASE_TRAINERS.map(t=>({...t}));
   TRAINERS=S.trainers; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
@@ -1229,7 +1229,7 @@ function outboxSheet(){ const list=(S.outbox||[]).slice(0,25);
       <div class="d" style="margin:0;line-height:1.5">${m.text}</div></div>`).join(''):`<div class="empty">Henüz mesaj oluşmadı · bir ders onaylayınca burada görünür</div>`}</div></div></div>`;
 }
 function openForm(t){ S.formSheet=t;
-  if(t==='trainer') S.nt={name:'',phone:'',pass:'1234',rate:50}; else S.ns={name:'',phone:'',pass:'1234',trainers:[],rates:{},lessons:8,months:2,price:9600};
+  if(t==='trainer') S.nt={name:'',phone:'',pass:'1234',rate:50}; else S.ns={name:'',phone:'',pass:'1234',trainers:[],rates:{},lessons:8,months:2,price:9600,trial:null};
   save(); render(); }
 function closeForm(){ S.formSheet=null; save(); render(); }
 function nsToggleTrainer(id){ const a=S.ns.trainers; const i=a.indexOf(id);
@@ -1259,11 +1259,25 @@ function addStudent(){ const f=S.ns; const name=(f.name||'').trim();
   const lessons=Math.max(1,parseInt(f.lessons)||1), months=Math.max(1,parseInt(f.months)||1), price=Math.max(0,parseInt(f.price)||0);
   const trRates={}; f.trainers.forEach(id=>{ const v=(f.rates||{})[id]; trRates[id]=(v!==undefined?Math.max(0,Math.min(100,parseInt(v)||0)):rateOf(id)); });
   const yeniId='s'+Date.now();
-  S.roster.push({id:yeniId,name,initials:initialsOf(name),phone:fmtPhone(f.phone),pass:String(f.pass),mustChange:true,trainers:[...f.trainers],trainerRates:trRates,
-    pkg:{lessons,months,used:0,price,startISO:iso(now),endISO:iso(addDays(now,months*30))}});
+  const yeni={id:yeniId,name,initials:initialsOf(name),phone:fmtPhone(f.phone),pass:String(f.pass),mustChange:true,trainers:[...f.trainers],trainerRates:trRates,
+    pkg:{lessons,months,used:0,price,startISO:iso(now),endISO:iso(addDays(now,months*30))}};
+  S.roster.push(yeni);
+  // formda tanışma dersi planlandıysa birlikte oluştur
+  let tanismaBilgi='';
+  const t=f.trial;
+  if(t&&t.hour!=null&&t.dISO>=iso(new Date())){
+    const T=t.tid||f.trainers[0];
+    if(!activeReqs(T,t.dISO).some(r=>r.hour===t.hour)){
+      S.requests.push({id:'dn'+Date.now(),trainerId:T,studentId:yeniId,studentName:name,initials:initialsOf(name),
+        dateISO:t.dISO,hour:t.hour,status:'approved',fee:0,rate:rateFor(yeni,T),trial:true});
+      yeni.trialUsed=true;
+      queueWA(f.phone,`Sayın ${name}, ${trainer(T).name} ile tanışma dersiniz ${DOW[new Date(String(t.dISO)+'T00:00:00').getDay()]} ${fmtShort(t.dISO)} saat ${hh(t.hour)} olarak planlanmıştır. Görüşmek üzere!`,{kind:'tanışma'});
+      tanismaBilgi=` · tanışma dersi ${fmtShort(t.dISO)} ${hh(t.hour)}`;
+    } else tanismaBilgi=' · tanışma saati dolduğu için eklenemedi';
+  }
   S.formSheet=null; S.screen.admin='members';
   openMember(yeniId);   // programını hemen tanımlayabilsin diye detayına geç
-  toast(`${name} eklendi · şimdi programını tanımlayabilirsin`); }
+  toast(`${name} eklendi${tanismaBilgi||' · şimdi programını tanımlayabilirsin'}`); }
 function formSheet(){ if(!S.formSheet) return '';
   if(S.formSheet==='profile') return profileSheet();
   if(S.formSheet==='outbox') return outboxSheet();
@@ -1293,15 +1307,91 @@ function formSheet(){ if(!S.formSheet) return '';
       <div class="field"><label>Ders adedi</label><input type="number" min="1" inputmode="numeric" value="${f.lessons}" oninput="S.ns.lessons=this.value"></div>
       <div class="field"><label>Süre (ay)</label><input type="number" min="1" inputmode="numeric" value="${f.months}" oninput="S.ns.months=this.value"></div>
       <div class="field"><label>Paket ücreti (₺)</label><input type="number" min="0" inputmode="numeric" value="${f.price}" oninput="S.ns.price=this.value"><span class="hint">Ders başı ≈ ${tl(Math.round((parseInt(f.price)||0)/Math.max(1,parseInt(f.lessons)||1)))}</span></div>
+      ${nsTrialBlock(f)}
       <button class="btn" onclick="addStudent()">${ic('check',18)} Öğrenciyi Ekle</button>
     </div></div></div>`;
 }
+/* yeni öğrenci formunda isteğe bağlı tanışma dersi */
+/* verilen tarihin hangi hafta ofsetine denk geldiğini bulur (gösterilen hafta hep seçili günle aynı olsun diye) */
+function weekOffsetOf(dISO){ const d=new Date(String(dISO)+'T12:00:00');
+  const mon=addDays(d,(d.getDay()===0?-6:1-d.getDay()));
+  const base=new Date(S.mondayISO); base.setHours(12,0,0,0);
+  return Math.round((mon-base)/(7*864e5)); }
+function nsToggleTrial(){ S.ns.trial=S.ns.trial?null:{tid:(S.ns.trainers[0]||null),dISO:iso(addDays(new Date(),1)),hour:null}; save(); render(); }
+function nsTrialTrainer(id){ S.ns.trial.tid=id; S.ns.trial.hour=null; save(); render(); }
+function nsTrialDay(dISO){ S.ns.trial.dISO=dISO; S.ns.trial.hour=null; save(); render(); }
+function nsTrialHour(h){ S.ns.trial.hour=h; save(); render(); }
+function nsTrialWeek(d){ const t=S.ns.trial; const yeni=addDays(new Date(String(t.dISO)+'T12:00:00'),d*7);
+  if(iso(yeni)<iso(new Date())) return;                 // geçmişe gitme
+  t.dISO=iso(yeni); t.hour=null; save(); render(); }
+function nsTrialBlock(f){
+  if(!f.trainers.length) return `<div class="row" style="background:var(--surface-2);border-style:dashed;margin-bottom:14px"><div class="ic">${ic('plus',18)}</div><div class="grow"><div class="t">Tanışma dersi</div><div class="d">Önce hoca seç · sonra buradan tanışma dersi planlayabilirsin</div></div></div>`;
+  const t=f.trial;
+  if(!t) return `<div class="row" style="cursor:pointer;margin-bottom:14px" onclick="nsToggleTrial()"><div class="ic acc">${ic('plus',18)}</div><div class="grow"><div class="t">Tanışma dersi ekle</div><div class="d">İsteğe bağlı · ücretsiz, ders hakkından düşmez</div></div><span class="tag mut">Ekle</span></div>`;
+  const T=t.tid||f.trainers[0]; const week=weekDatesFrom(weekOffsetOf(t.dISO));
+  const selD=new Date(String(t.dISO)+'T12:00:00');
+  const bos=freeHours(T,selD).filter(h=>!(iso(selD)===iso(new Date())&&h<=new Date().getHours()));
+  return `<div class="card" style="margin-bottom:14px;padding:14px">
+    <div class="sect" style="margin:0 0 8px; display:flex; justify-content:space-between; align-items:center"><span>Tanışma dersi</span><button class="csvbtn" style="background:var(--surface-2);color:var(--ink-3)" onclick="nsToggleTrial()">${ic('x',13)} Kaldır</button></div>
+    ${f.trainers.length>1?`<div class="fchips" style="margin-bottom:10px">${f.trainers.map(id=>`<button class="fchip ${T===id?'on':''}" onclick="nsTrialTrainer('${id}')">${trainer(id).name.split(' ')[0]}</button>`).join('')}</div>`:''}
+    ${weekNav(week,'nsTrialWeek(-1)','nsTrialWeek(1)',weekOffsetOf(t.dISO)<=weekOffsetOf(iso(new Date())))}
+    <div class="days" style="margin-top:8px">${week.map(d=>{ const gecmis=iso(d)<=iso(new Date()); const kapali=!availHoursForDate(T,d).length;
+      return `<div class="day ${iso(d)===t.dISO?'on':''} ${(gecmis||kapali)?'off':''}" ${gecmis?'':`onclick="nsTrialDay('${iso(d)}')"`}>${DOW[d.getDay()]}<span class="n">${d.getDate()}</span></div>`; }).join('')}</div>
+    <div class="sect" style="margin:12px 1px 6px">Boş saatler · ${fmtDay(selD)}</div>
+    ${bos.length?`<div class="slots">${bos.map(h=>`<div class="slot ${t.hour===h?'sel':'free'}" onclick="nsTrialHour(${h})">${hh(h)}</div>`).join('')}</div>`:`<div class="empty" style="padding:14px">Bu gün boş saat yok — başka gün seç</div>`}
+    ${t.hour!=null?`<div class="d" style="margin-top:10px;color:var(--ok)">${DOW[selD.getDay()]} ${fmtShort(t.dISO)} · ${hh(t.hour)} · ${trainer(T).name}</div>`:''}
+  </div>`;
+}
+function setAdminMode(m){ S.adminMode=m; S.adminAvail=(m==='avail'); save(); render(); }
 function renderAdminTrainers(){
-  const T=curTrainer(); const av=S.adminAvail;
-  const appbar=`<div class="appbar"><div><button class="backbtn" onclick="goHub()">${ic('chevronL',18)} Yönetim</button><div class="h1" style="margin-top:8px">${trainer(T).name}</div><div class="subline">Takvimini yönet · ders sil/kaydır/ekle · onayla</div></div></div>`;
+  const T=curTrainer(); const m=S.adminMode||(S.adminAvail?'avail':'agenda');
+  const appbar=`<div class="appbar"><div><button class="backbtn" onclick="goHub()">${ic('chevronL',18)} Yönetim</button><div class="h1" style="margin-top:8px">${trainer(T).name}</div><div class="subline">Takvim · müsaitlik · aylık ders raporu</div></div></div>`;
   const picker=`<div class="sect" style="margin-top:2px">Hoca</div><div class="row" style="cursor:pointer" onclick="openTrPick()"><div class="mono-av">${trainer(T).initials}</div><div class="grow"><div class="t">${trainer(T).name}</div><div class="d">${TRAINERS.length} hoca · değiştirmek için dokun</div></div><span style="color:var(--ink-3);display:flex">${ic('chevronR',18)}</span></div>`;
-  const modes=`<div class="toggle"><button class="${!av?'on':''}" onclick="setAdminAvail(false)">Takvim</button><button class="${av?'on':''}" onclick="setAdminAvail(true)">Müsaitlik</button></div>`;
-  return appbar+picker+modes+(av?availBody():agendaBody());
+  const modes=`<div class="toggle">
+    <button class="${m==='agenda'?'on':''}" onclick="setAdminMode('agenda')">Takvim</button>
+    <button class="${m==='avail'?'on':''}" onclick="setAdminMode('avail')">Müsaitlik</button>
+    <button class="${m==='report'?'on':''}" onclick="setAdminMode('report')">Ders raporu</button></div>`;
+  const govde = m==='avail'?availBody() : m==='report'?trainerLessonReport(T) : agendaBody();
+  return appbar+picker+modes+govde;
+}
+
+/* ---------- hocanın aylık ders raporu: öğrenci bazında döküm ---------- */
+function trLessonBreakdown(tId,monthOff){
+  const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+monthOff);
+  const y=d.getFullYear(), mo=d.getMonth();
+  const inM=r=>{ const dd=new Date(String(r.dateISO)+'T00:00:00'); return dd.getFullYear()===y&&dd.getMonth()===mo; };
+  const dersler=S.requests.filter(r=>r.trainerId===tId&&r.status==='approved'&&inM(r));
+  const map={};
+  dersler.forEach(r=>{ const k=r.studentId;
+    if(!map[k]) map[k]={id:k,ad:r.studentName,initials:r.initials,adet:0,deneme:0,fiks:0,tarihler:[]};
+    map[k].adet++; if(r.trial)map[k].deneme++; if(r.fixed)map[k].fiks++;
+    map[k].tarihler.push(r.dateISO+'|'+r.hour); });
+  const iptal=S.requests.filter(r=>r.trainerId===tId&&r.status==='cancelled'&&inM(r)).length;
+  return {ay:d, satirlar:Object.values(map).sort((a,b)=>b.adet-a.adet||a.ad.localeCompare(b.ad,'tr')),
+    toplam:dersler.length, ogrenci:Object.keys(map).length, iptal}; }
+function exportTrLessonCSV(){ const T=curTrainer(); const b=trLessonBreakdown(T,S.repMonth);
+  const head=['Ogrenci','Ders Adedi','Deneme','Fiks'];
+  const lines=[head.join(';')].concat(b.satirlar.map(r=>[r.ad,r.adet,r.deneme,r.fiks].join(';')));
+  lines.push(['TOPLAM',b.toplam,b.satirlar.reduce((a,r)=>a+r.deneme,0),b.satirlar.reduce((a,r)=>a+r.fiks,0)].join(';'));
+  const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`${trainer(T).name.replace(/\s+/g,'-')}-${MONF[b.ay.getMonth()]}-${b.ay.getFullYear()}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); toast('CSV indirildi'); }
+function trainerLessonReport(T){ const b=trLessonBreakdown(T,S.repMonth);
+  return `<div class="weeknav" style="margin-top:2px"><button class="navbtn" onclick="repMonthShift(-1)">${ic('chevronL',20)}</button>
+    <div class="wncenter"><div class="wnrange">${MONF[b.ay.getMonth()]}</div><div class="wnmonth">${b.ay.getFullYear()}</div></div>
+    <button class="navbtn" ${S.repMonth===0?'disabled':''} onclick="repMonthShift(1)">${ic('chevronR',20)}</button></div>
+  <div class="stat2"><div class="stat"><div class="n">${b.toplam}</div><div class="l">Verilen ders</div></div>
+    <div class="stat"><div class="n">${b.ogrenci}</div><div class="l">Ders alan öğrenci</div></div></div>
+  <div class="card">
+    <div class="sect" style="margin:0 0 10px; display:flex; justify-content:space-between; align-items:center"><span>Öğrenci bazında</span>${b.satirlar.length?`<button class="csvbtn" onclick="exportTrLessonCSV()">${ic('chart',14)} Excel (CSV)</button>`:''}</div>
+    ${b.satirlar.length?`<div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Öğrenci</th><th class="num">Ders</th><th class="num">Not</th></tr></thead>
+      <tbody>${b.satirlar.map(r=>`<tr><td>${r.ad}</td><td class="num" style="font-weight:800">${r.adet}</td><td class="num" style="color:var(--ink-3);font-size:11.5px">${[r.fiks?r.fiks+' fiks':'',r.deneme?r.deneme+' tanışma':''].filter(Boolean).join(' · ')||'—'}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>TOPLAM</td><td class="num">${b.toplam}</td><td class="num"></td></tr></tfoot>
+    </table></div>`:`<div class="empty">Bu ayda verilen ders yok</div>`}
+    ${b.iptal?`<div class="d" style="margin-top:10px">Ayrıca ${b.iptal} ders iptal edildi</div>`:''}
+  </div>`;
 }
 
 /* ---------- üyeye ait program tanımları: fiks ders + tanışma dersi ----------
