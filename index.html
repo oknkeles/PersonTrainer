@@ -400,123 +400,48 @@ const IP={
 function ic(n,w=22){ const p=IP[n]||''; return `<svg viewBox="0 0 24 24" width="${w}" height="${w}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p.split('M').filter(Boolean).map(s=>`<path d="M${s}"/>`).join('')}</svg>`; }
 
 /* ---------- statik ---------- */
-const KEY='pt_studio_v17';
-const BASE_TRAINERS=[{id:'t0',name:'Ramazan Haktan Tatar',initials:'RT',owner:true},
-  {id:'t1',name:'Burak Hoca',initials:'BH'},{id:'t2',name:'Ceren Aksoy',initials:'CA'},
-  {id:'t3',name:'Deniz Arı',initials:'DA'},{id:'t4',name:'Mert Kaya',initials:'MK'},{id:'t5',name:'Sıla Yön',initials:'SY'},
-  {id:'t6',name:'Kerem Su',initials:'KS'},{id:'t7',name:'Ayça Ün',initials:'AÜ'},{id:'t8',name:'Barış El',initials:'BE'},
-  {id:'t9',name:'Ece Nar',initials:'EN'},{id:'t10',name:'Tolga Ay',initials:'TA'}];
+const KEY='pt_studio_v18';
+/* New U Sport Center — gerçek hoca kadrosu. Telefonlar gelene kadar giriş kodu tek hane (1..6). */
+const BASE_TRAINERS=[{"id":"t1","name":"Burak","initials":"B","phone":"0530 378 98 84","pass":"Haktan2026","mustChange":false,"code":"1"},{"id":"t2","name":"Cengizhan Karakaya","initials":"CK","phone":"2","pass":"2","mustChange":false,"code":"2"},{"id":"t0","name":"Ramazan Haktan Tatar","initials":"RH","phone":"0530 649 21 03","pass":"Aura2026","mustChange":false,"code":"3","owner":true},{"id":"t3","name":"Muhsina","initials":"M","phone":"4","pass":"4","mustChange":false,"code":"4"},{"id":"t4","name":"Beril","initials":"B","phone":"5","pass":"5","mustChange":false,"code":"5"},{"id":"t5","name":"Muhammet","initials":"M","phone":"6","pass":"6","mustChange":false,"code":"6"}];
 let TRAINERS=BASE_TRAINERS.map(t=>({...t}));
-const trainer=id=>TRAINERS.find(t=>t.id===id);
+const trainer=id=>TRAINERS.find(t=>t.id===id)||{id,name:'—',initials:'—'};
 const firstName=id=>trainer(id).name.split(' ')[0];
+/* DEMO üyeler — gerçek kimse değil. Salonun asıl listesi database kurulunca aktarılacak. */
+const BASE_ROSTER=[{"id":"m1","name":"Zeynep Kaya","initials":"ZK","trainers":["t1","t0"],"trainerRates":{"t1":50,"t0":50},"phone":"0500 000 00 00","mustChange":false,"pkg":{"lessons":8,"months":2,"used":0,"price":8800,"type":"Fonksiyonel","so":-5,"eo":60}},{"id":"m2","name":"Mehmet Barış","initials":"MB","trainers":["t2"],"trainerRates":{"t2":50},"phone":"0500 000 00 01","mustChange":false,"pkg":{"lessons":10,"months":2,"used":1,"price":11000,"type":"Boks","so":-6,"eo":59}},{"id":"m3","name":"Ela Tan","initials":"ET","trainers":["t0"],"trainerRates":{"t0":50},"phone":"0500 000 00 02","mustChange":false,"pkg":{"lessons":12,"months":3,"used":2,"price":13200,"type":"Reformer","so":-7,"eo":88}},{"id":"m4","name":"Rüya Yıldız","initials":"RY","trainers":["t3"],"trainerRates":{"t3":50},"phone":"0500 000 00 03","mustChange":false,"pkg":{"lessons":16,"months":3,"used":3,"price":17600,"type":"Fonksiyonel","so":-8,"eo":87}},{"id":"m5","name":"Deniz Kaya","initials":"DK","trainers":["t4"],"trainerRates":{"t4":50},"phone":"0500 000 00 04","mustChange":false,"pkg":{"lessons":17,"months":3,"used":4,"price":18700,"type":"Boks","so":-9,"eo":86}},{"id":"m6","name":"Levent Mor","initials":"LM","trainers":["t5","t2"],"trainerRates":{"t5":50,"t2":50},"phone":"0500 000 00 05","mustChange":false,"pkg":{"lessons":24,"months":4,"used":5,"price":26400,"type":"Reformer","so":-10,"eo":115}},{"id":"m7","name":"Emre Demir","initials":"ED","trainers":["t1"],"trainerRates":{"t1":50},"phone":"0500 000 00 06","mustChange":false,"pkg":{"lessons":8,"months":2,"used":6,"price":8800,"type":"Fonksiyonel","so":-11,"eo":54}},{"id":"m8","name":"Hakan Koç","initials":"HK","trainers":["t2"],"trainerRates":{"t2":50},"phone":"0500 000 00 07","mustChange":false,"pkg":{"lessons":10,"months":2,"used":7,"price":11000,"type":"Boks","so":-12,"eo":53}},{"id":"m9","name":"Ceyda Nur","initials":"CN","trainers":["t0"],"trainerRates":{"t0":50},"phone":"0500 000 00 08","mustChange":false,"pkg":{"lessons":12,"months":3,"used":8,"price":13200,"type":"Reformer","so":-13,"eo":82}},{"id":"m10","name":"Kaan Tunç","initials":"KT","trainers":["t3"],"trainerRates":{"t3":50},"phone":"0500 000 00 09","mustChange":false,"pkg":{"lessons":16,"months":3,"used":9,"price":17600,"type":"Fonksiyonel","so":-14,"eo":81}},{"id":"m11","name":"Naz Ak","initials":"NA","trainers":["t4","t1"],"trainerRates":{"t4":50,"t1":50},"phone":"0500 000 00 10","mustChange":false,"pkg":{"lessons":17,"months":3,"used":10,"price":18700,"type":"Boks","so":-15,"eo":80}},{"id":"m12","name":"Selin Ateş","initials":"SA","trainers":["t5"],"trainerRates":{"t5":50},"phone":"0500 000 00 11","mustChange":false,"pkg":{"lessons":24,"months":4,"used":11,"price":26400,"type":"Reformer","so":-16,"eo":109}},{"id":"m13","name":"Onur Kaya","initials":"OK","trainers":["t1"],"trainerRates":{"t1":50},"phone":"0500 000 00 12","mustChange":false,"pkg":{"lessons":8,"months":2,"used":3,"price":8800,"type":"Fonksiyonel","so":-17,"eo":48}},{"id":"m14","name":"Buse Er","initials":"BE","trainers":["t2"],"trainerRates":{"t2":50},"phone":"0500 000 00 13","mustChange":false,"pkg":{"lessons":10,"months":2,"used":2,"price":11000,"type":"Boks","so":-18,"eo":47}},{"id":"m15","name":"Cem Yıldırım","initials":"CY","trainers":["t0"],"trainerRates":{"t0":50},"phone":"0500 000 00 14","mustChange":false,"pkg":{"lessons":12,"months":3,"used":1,"price":13200,"type":"Reformer","so":-19,"eo":76}},{"id":"m16","name":"Derya Şen","initials":"DŞ","trainers":["t3","t5"],"trainerRates":{"t3":50,"t5":50},"phone":"0500 000 00 15","mustChange":false,"pkg":{"lessons":16,"months":3,"used":15,"price":17600,"type":"Fonksiyonel","so":-20,"eo":75}},{"id":"m17","name":"Efe Doğan","initials":"ED","trainers":["t4"],"trainerRates":{"t4":50},"phone":"0500 000 00 16","mustChange":false,"pkg":{"lessons":17,"months":3,"used":16,"price":18700,"type":"Boks","so":-21,"eo":74}},{"id":"m18","name":"Gizem Ak","initials":"GA","trainers":["t5"],"trainerRates":{"t5":50},"phone":"0500 000 00 17","mustChange":false,"pkg":{"lessons":24,"months":4,"used":17,"price":26400,"type":"Reformer","so":-22,"eo":103}},{"id":"m19","name":"Halil Uz","initials":"HU","trainers":["t1"],"trainerRates":{"t1":50},"phone":"0500 000 00 18","mustChange":false,"pkg":{"lessons":8,"months":2,"used":0,"price":8800,"type":"Fonksiyonel","so":-23,"eo":42}},{"id":"m20","name":"İpek Nar","initials":"İN","trainers":["t2"],"trainerRates":{"t2":50},"phone":"0500 000 00 19","mustChange":false,"pkg":{"lessons":10,"months":2,"used":8,"price":11000,"type":"Boks","so":-24,"eo":41}},{"id":"m21","name":"Yusuf Tan","initials":"YT","trainers":["t0","t4"],"trainerRates":{"t0":50,"t4":50},"phone":"0500 000 00 20","mustChange":false,"pkg":{"lessons":12,"months":3,"used":7,"price":13200,"type":"Reformer","so":-25,"eo":90}},{"id":"m22","name":"Aslı Kurt","initials":"AK","trainers":["t3"],"trainerRates":{"t3":50},"phone":"0500 000 00 21","mustChange":false,"pkg":{"lessons":16,"months":3,"used":4,"price":17600,"type":"Fonksiyonel","so":-26,"eo":89}},{"id":"m23","name":"Burak Öz","initials":"BÖ","trainers":["t4"],"trainerRates":{"t4":50},"phone":"0500 000 00 22","mustChange":false,"pkg":{"lessons":17,"months":3,"used":4,"price":18700,"type":"Boks","so":-27,"eo":88}},{"id":"m24","name":"Ayşe Korkmaz","initials":"AK","trainers":["t5"],"trainerRates":{"t5":50},"phone":"0500 000 00 23","mustChange":false,"pkg":{"lessons":24,"months":4,"used":23,"price":26400,"type":"Reformer","so":-28,"eo":117}},{"id":"m25","name":"Ahmet Şahin","initials":"AŞ","trainers":["t1"],"trainerRates":{"t1":50},"phone":"0500 000 00 24","mustChange":false,"pkg":{"lessons":8,"months":2,"used":6,"price":8800,"type":"Fonksiyonel","so":-29,"eo":56}},{"id":"m26","name":"Alper Güneş","initials":"AG","trainers":["t2","t3"],"trainerRates":{"t2":50,"t3":50},"phone":"0500 000 00 25","mustChange":false,"pkg":{"lessons":10,"months":2,"used":3,"price":11000,"type":"Boks","so":-30,"eo":55}},{"id":"m27","name":"Bora Çetin","initials":"BÇ","trainers":["t0"],"trainerRates":{"t0":50},"phone":"0500 000 00 26","mustChange":false,"pkg":{"lessons":12,"months":3,"used":0,"price":13200,"type":"Reformer","so":-31,"eo":84}},{"id":"m28","name":"Bahar Yalçın","initials":"BY","trainers":["t3"],"trainerRates":{"t3":50},"phone":"0500 000 00 27","mustChange":false,"pkg":{"lessons":16,"months":3,"used":10,"price":17600,"type":"Fonksiyonel","so":-32,"eo":83}},{"id":"m29","name":"Berk Aydın","initials":"BA","trainers":["t4"],"trainerRates":{"t4":50},"phone":"0500 000 00 28","mustChange":false,"pkg":{"lessons":17,"months":3,"used":10,"price":18700,"type":"Boks","so":-33,"eo":82}},{"id":"m30","name":"Canan Erdem","initials":"CE","trainers":["t5"],"trainerRates":{"t5":50},"phone":"0500 000 00 29","mustChange":false,"pkg":{"lessons":24,"months":4,"used":4,"price":26400,"type":"Reformer","so":-34,"eo":111}},{"id":"m31","name":"Cenk Polat","initials":"CP","trainers":["t1","t0"],"trainerRates":{"t1":50,"t0":50},"phone":"0500 000 00 30","mustChange":false,"pkg":{"lessons":8,"months":2,"used":3,"price":8800,"type":"Fonksiyonel","so":-35,"eo":50}},{"id":"m32","name":"Damla Ergin","initials":"DE","trainers":["t2"],"trainerRates":{"t2":50},"phone":"0500 000 00 31","mustChange":false,"pkg":{"lessons":10,"months":2,"used":9,"price":11000,"type":"Boks","so":-36,"eo":49}},{"id":"m33","name":"Doruk Sever","initials":"DS","trainers":["t0"],"trainerRates":{"t0":50},"phone":"0500 000 00 32","mustChange":false,"pkg":{"lessons":12,"months":3,"used":6,"price":13200,"type":"Reformer","so":-37,"eo":78}},{"id":"m34","name":"Duygu Bal","initials":"DB","trainers":["t3"],"trainerRates":{"t3":50},"phone":"0500 000 00 33","mustChange":false,"pkg":{"lessons":16,"months":3,"used":16,"price":17600,"type":"Fonksiyonel","so":-38,"eo":77}},{"id":"m35","name":"Ege Kılıç","initials":"EK","trainers":["t4"],"trainerRates":{"t4":50},"phone":"0500 000 00 34","mustChange":false,"pkg":{"lessons":17,"months":3,"used":16,"price":18700,"type":"Boks","so":-39,"eo":76}},{"id":"m36","name":"Elif Sarı","initials":"ES","trainers":["t5","t2"],"trainerRates":{"t5":50,"t2":50},"phone":"0500 000 00 35","mustChange":false,"pkg":{"lessons":24,"months":4,"used":10,"price":26400,"type":"Reformer","so":-40,"eo":105}},{"id":"m37","name":"Emine Toprak","initials":"ET","trainers":["t1"],"trainerRates":{"t1":50},"phone":"0500 000 00 36","mustChange":false,"pkg":{"lessons":8,"months":2,"used":0,"price":8800,"type":"Fonksiyonel","so":-41,"eo":44}},{"id":"m38","name":"Ferhat Uçar","initials":"FU","trainers":["t2"],"trainerRates":{"t2":50},"phone":"0500 000 00 37","mustChange":false,"pkg":{"lessons":10,"months":2,"used":4,"price":11000,"type":"Boks","so":-42,"eo":43}},{"id":"m39","name":"Feyza Demir","initials":"FD","trainers":["t0"],"trainerRates":{"t0":50},"phone":"0500 000 00 38","mustChange":false,"pkg":{"lessons":12,"months":3,"used":12,"price":13200,"type":"Reformer","so":-43,"eo":72}},{"id":"m40","name":"Gökhan Aslan","initials":"GA","trainers":["t3"],"trainerRates":{"t3":50},"phone":"0500 000 00 39","mustChange":false,"pkg":{"lessons":16,"months":3,"used":5,"price":17600,"type":"Fonksiyonel","so":-44,"eo":71}},{"id":"m41","name":"Gül Şen","initials":"GŞ","trainers":["t4","t1"],"trainerRates":{"t4":50,"t1":50},"phone":"0500 000 00 40","mustChange":false,"pkg":{"lessons":17,"months":3,"used":4,"price":18700,"type":"Boks","so":-5,"eo":90}},{"id":"m42","name":"Hande Yavuz","initials":"HY","trainers":["t5"],"trainerRates":{"t5":50},"phone":"0500 000 00 41","mustChange":false,"pkg":{"lessons":24,"months":4,"used":16,"price":26400,"type":"Reformer","so":-6,"eo":119}},{"id":"m43","name":"Hasan Kaya","initials":"HK","trainers":["t1"],"trainerRates":{"t1":50},"phone":"0500 000 00 42","mustChange":false,"pkg":{"lessons":8,"months":2,"used":6,"price":8800,"type":"Fonksiyonel","so":-7,"eo":58}},{"id":"m44","name":"Hilal Ateş","initials":"HA","trainers":["t2"],"trainerRates":{"t2":50},"phone":"0500 000 00 43","mustChange":false,"pkg":{"lessons":10,"months":2,"used":10,"price":11000,"type":"Boks","so":-8,"eo":57}},{"id":"m45","name":"Işıl Meriç","initials":"IM","trainers":["t0"],"trainerRates":{"t0":50},"phone":"0500 000 00 44","mustChange":false,"pkg":{"lessons":12,"months":3,"used":5,"price":13200,"type":"Reformer","so":-9,"eo":86}},{"id":"m46","name":"İlker Doğan","initials":"İD","trainers":["t3","t5"],"trainerRates":{"t3":50,"t5":50},"phone":"0500 000 00 45","mustChange":false,"pkg":{"lessons":16,"months":3,"used":11,"price":17600,"type":"Fonksiyonel","so":-10,"eo":85}},{"id":"m47","name":"İrem Su","initials":"İS","trainers":["t4"],"trainerRates":{"t4":50},"phone":"0500 000 00 46","mustChange":false,"pkg":{"lessons":17,"months":3,"used":10,"price":18700,"type":"Boks","so":-11,"eo":84}},{"id":"m48","name":"Jale Aksu","initials":"JA","trainers":["t5"],"trainerRates":{"t5":50},"phone":"0500 000 00 47","mustChange":false,"pkg":{"lessons":24,"months":4,"used":22,"price":26400,"type":"Reformer","so":-12,"eo":113}},{"id":"m49","name":"Kaya Bulut","initials":"KB","trainers":["t1"],"trainerRates":{"t1":50},"phone":"0500 000 00 48","mustChange":false,"pkg":{"lessons":8,"months":2,"used":3,"price":8800,"type":"Fonksiyonel","so":-13,"eo":52}},{"id":"m50","name":"Kerem Yıldırım","initials":"KY","trainers":["t2"],"trainerRates":{"t2":50},"phone":"0500 000 00 49","mustChange":false,"pkg":{"lessons":10,"months":2,"used":5,"price":11000,"type":"Boks","so":-14,"eo":51}},{"id":"m51","name":"Lale Öztürk","initials":"LÖ","trainers":["t0","t4"],"trainerRates":{"t0":50,"t4":50},"phone":"0500 000 00 50","mustChange":false,"pkg":{"lessons":12,"months":3,"used":11,"price":13200,"type":"Reformer","so":-15,"eo":80}},{"id":"m52","name":"Melis Arı","initials":"MA","trainers":["t3"],"trainerRates":{"t3":50},"phone":"0500 000 00 51","mustChange":false,"pkg":{"lessons":16,"months":3,"used":0,"price":17600,"type":"Fonksiyonel","so":-16,"eo":79}},{"id":"m53","name":"Merve Çelik","initials":"MÇ","trainers":["t4"],"trainerRates":{"t4":50},"phone":"0500 000 00 52","mustChange":false,"pkg":{"lessons":17,"months":3,"used":16,"price":18700,"type":"Boks","so":-17,"eo":78}},{"id":"m54","name":"Murat Koç","initials":"MK","trainers":["t5"],"trainerRates":{"t5":50},"phone":"0500 000 00 53","mustChange":false,"pkg":{"lessons":24,"months":4,"used":3,"price":26400,"type":"Reformer","so":-18,"eo":107}},{"id":"m55","name":"Nihan Taş","initials":"NT","trainers":["t1"],"trainerRates":{"t1":50},"phone":"0500 000 00 54","mustChange":false,"pkg":{"lessons":8,"months":2,"used":0,"price":8800,"type":"Fonksiyonel","so":-19,"eo":46}},{"id":"m56","name":"Okan Bilge","initials":"OB","trainers":["t2","t3"],"trainerRates":{"t2":50,"t3":50},"phone":"0500 000 00 55","mustChange":false,"pkg":{"lessons":10,"months":2,"used":0,"price":11000,"type":"Boks","so":-20,"eo":45}},{"id":"m57","name":"Oya Kurt","initials":"OK","trainers":["t0"],"trainerRates":{"t0":50},"phone":"0500 000 00 56","mustChange":false,"pkg":{"lessons":12,"months":3,"used":4,"price":13200,"type":"Reformer","so":-21,"eo":74}},{"id":"m58","name":"Pelin Duman","initials":"PD","trainers":["t3"],"trainerRates":{"t3":50},"phone":"0500 000 00 57","mustChange":false,"pkg":{"lessons":16,"months":3,"used":6,"price":17600,"type":"Fonksiyonel","so":-22,"eo":73}},{"id":"m59","name":"Rıza Kaplan","initials":"RK","trainers":["t4"],"trainerRates":{"t4":50},"phone":"0500 000 00 58","mustChange":false,"pkg":{"lessons":17,"months":3,"used":4,"price":18700,"type":"Boks","so":-23,"eo":72}},{"id":"m60","name":"Selim Ergün","initials":"SE","trainers":["t5"],"trainerRates":{"t5":50},"phone":"0500 000 00 59","mustChange":false,"pkg":{"lessons":24,"months":4,"used":9,"price":26400,"type":"Reformer","so":-24,"eo":101}},{"id":"m61","name":"Serap Yılmaz","initials":"SY","trainers":["t1","t0"],"trainerRates":{"t1":50,"t0":50},"phone":"0500 000 00 60","mustChange":false,"pkg":{"lessons":8,"months":2,"used":6,"price":8800,"type":"Fonksiyonel","so":-25,"eo":60}},{"id":"m62","name":"Sinem Akın","initials":"SA","trainers":["t2"],"trainerRates":{"t2":50},"phone":"0500 000 00 61","mustChange":false,"pkg":{"lessons":10,"months":2,"used":6,"price":11000,"type":"Boks","so":-26,"eo":59}},{"id":"m63","name":"Şule Baran","initials":"ŞB","trainers":["t0"],"trainerRates":{"t0":50},"phone":"0500 000 00 62","mustChange":false,"pkg":{"lessons":12,"months":3,"used":10,"price":13200,"type":"Reformer","so":-27,"eo":88}},{"id":"m64","name":"Tolga Deniz","initials":"TD","trainers":["t3"],"trainerRates":{"t3":50},"phone":"0500 000 00 63","mustChange":false,"pkg":{"lessons":16,"months":3,"used":12,"price":17600,"type":"Fonksiyonel","so":-28,"eo":87}},{"id":"m65","name":"Tuğçe Er","initials":"TE","trainers":["t4"],"trainerRates":{"t4":50},"phone":"0500 000 00 64","mustChange":false,"pkg":{"lessons":17,"months":3,"used":10,"price":18700,"type":"Boks","so":-29,"eo":86}},{"id":"m66","name":"Ufuk Yalın","initials":"UY","trainers":["t5","t2"],"trainerRates":{"t5":50,"t2":50},"phone":"0500 000 00 65","mustChange":false,"pkg":{"lessons":24,"months":4,"used":15,"price":26400,"type":"Reformer","so":-30,"eo":115}},{"id":"m67","name":"Umut Şeker","initials":"UŞ","trainers":["t1"],"trainerRates":{"t1":50},"phone":"0500 000 00 66","mustChange":false,"pkg":{"lessons":8,"months":2,"used":3,"price":8800,"type":"Fonksiyonel","so":-31,"eo":54}},{"id":"m68","name":"Vedat Alp","initials":"VA","trainers":["t2"],"trainerRates":{"t2":50},"phone":"0500 000 00 67","mustChange":false,"pkg":{"lessons":10,"months":2,"used":1,"price":11000,"type":"Boks","so":-32,"eo":53}},{"id":"m69","name":"Yasemin Kara","initials":"YK","trainers":["t0"],"trainerRates":{"t0":50},"phone":"0500 000 00 68","mustChange":false,"pkg":{"lessons":12,"months":3,"used":3,"price":13200,"type":"Reformer","so":-33,"eo":82}},{"id":"m70","name":"Zeki Turan","initials":"ZT","trainers":["t3"],"trainerRates":{"t3":50},"phone":"0500 000 00 69","mustChange":false,"pkg":{"lessons":16,"months":3,"used":1,"price":17600,"type":"Fonksiyonel","so":-34,"eo":81}}];
 
 function seed(){
   const now=new Date(); now.setHours(12,0,0,0);
   const monday=addDays(now,(now.getDay()===0?-6:1-now.getDay()));
-  const mk=(id,name,init,trs,lessons,months,used,so,eo,per)=>({id,name,initials:init,trainers:trs,
-    pkg:{lessons,months,used,price:lessons*per,startISO:iso(addDays(now,so)),endISO:iso(addDays(now,eo))}});
-  const roster=[
-    mk('s1','Zeynep Kaya','ZK',['t1','t2'],12,3,4,-51,39,1200),
-    mk('p0','Mehmet Barış','MB',['t1','t3'],10,2,6,-30,30,1100),
-    mk('p1','Ela Tan','ET',['t1','t2'],16,4,3,-20,100,1300),
-    mk('p2','Rüya Yıldız','RY',['t1'],8,1,2,-10,20,1100),
-    mk('p3','Deniz Kaya','DK',['t1','t3'],5,1,1,-5,25,1200),
-    mk('p4','Levent Mor','LM',['t1'],10,3,7,-40,50,1200),
-    mk('p5','Emre Demir','EM',['t1'],8,1,8,-32,-2,1000),
-    mk('p6','Hakan Koç','HK',['t1','t4'],12,3,5,-22,68,1200),
-    mk('p7','Ceyda Nur','CN',['t2'],4,1,1,-8,22,1300),
-    mk('p8','Kaan Tunç','KT',['t1','t2'],12,3,5,-15,75,1100),
-    mk('p9','Naz Ak','NA',['t1','t4'],8,2,2,-12,48,1200),
-    mk('p10','Selin Ateş','SA',['t1','t0'],10,3,3,-18,72,1200),
-    mk('p11','Onur Kaya','OK',['t1'],8,2,5,-25,35,1100),
-    mk('p12','Buse Er','BE',['t1','t2'],16,4,9,-35,85,1300),
-    mk('p13','Cem Yıldırım','CY',['t1'],5,1,4,-14,16,1000),
-    mk('p14','Derya Şen','DŞ',['t2'],12,3,2,-9,81,1250),
-    mk('p15','Efe Doğan','ED',['t1'],10,2,10,-40,20,1150),
-    mk('p16','Gizem Ak','GA',['t1','t0'],8,1,3,-6,24,1200),
-    mk('p17','Halil Uz','HU',['t1','t2'],12,3,7,-28,62,1300),
-    mk('p18','İpek Nar','İN',['t1'],4,1,1,-3,27,1100),
-    mk('p19','Yusuf Tan','YT',['t1'],16,4,12,-30,90,1250),
-    mk('p20','Aslı Kurt','AK',['t1'],10,3,6,-20,70,1200),
-    mk('p21','Burak Öz','BÖ',['t2'],8,2,4,-16,44,1150),
-  ];
-  // kalabalık salon senaryosu için ek üyeler (alfabetik liste ve arama gerçekçi olsun)
-  const ADS=['Ayşe Korkmaz','Ahmet Şahin','Alper Güneş','Bora Çetin','Bahar Yalçın','Berk Aydın','Canan Erdem','Cenk Polat','Ceyhun Ak','Damla Ergin','Doruk Sever','Duygu Bal','Ege Kılıç','Elif Sarı','Emine Toprak','Ferhat Uçar','Feyza Demir','Gökhan Aslan','Gül Şen','Hande Yavuz','Hasan Kaya','Hilal Ateş','Işıl Meriç','İlker Doğan','İrem Su','Jale Aksu','Kaya Bulut','Kerem Yıldırım','Lale Öztürk','Melis Arı','Merve Çelik','Murat Koç','Nihan Taş','Okan Bilge','Oya Kurt','Ömer Faruk Ay','Pelin Duman','Rıza Kaplan','Selim Ergün','Serap Yılmaz','Sinem Akın','Şule Baran','Tolga Deniz','Tuğçe Er','Ufuk Yalın','Umut Şeker','Vedat Alp','Yasemin Kara','Zeki Turan','Zümrüt Ay'];
-  ADS.forEach((ad,i)=>{ const ana=BASE_TRAINERS[1+(i%4)].id, hocalar=[ana];
-    if(i%5===0){ const ek=BASE_TRAINERS[1+((i+2)%4)].id; if(ek!==ana) hocalar.push(ek); }
-    const ders=[4,5,8,10,12,16][i%6], ay=[1,1,2,3,3,4][i%6], per=1000+((i%7)*50);
-    roster.push(mk('g'+i,ad,initialsOf(ad),hocalar,ders,ay,i%(ders+1),-(5+(i%40)),(i%3===0?-2:20+(i%70)),per)); });
-  const byName=n=>roster.find(r=>r.name===n);
-  // müsaitlik: haftagünü -> açık saatler (başlangıç saatleri)
-  const rng=(a,b)=>{const o=[];for(let h=a;h<b;h++)o.push(h);return o;};
-  const t1w={},t2w={};
-  [1,2,3,4,5].forEach(d=>{ t1w[d]=[...rng(10,14),...rng(18,22)]; t2w[d]=[...rng(9,12),...rng(17,20)]; });
-  t1w[6]=rng(10,13); // cmt
-  const availability={t1:t1w,t2:t2w};
-  ['t3','t4','t5','t6','t7','t8','t9','t10'].forEach(id=>{ const w={}; [1,2,3,4,5].forEach(d=>{ w[d]=[...rng(10,13),...rng(17,21)]; }); availability[id]=w; });
-  const t0w={}; [1,2,3,4,5].forEach(d=>{ t0w[d]=[...rng(10,13),...rng(18,21)]; }); availability.t0=t0w;
   const trs=BASE_TRAINERS.map(t=>({...t}));
-  const plan=[
-    [0,10,'Mehmet Barış','approved'],[0,18,'Emre Demir','approved'],[0,19,'Kaan Tunç','approved'],[0,20,'Naz Ak','approved'],
-    [1,10,'Zeynep Kaya','approved'],[1,18,'Emre Demir','approved'],[1,19,'Rüya Yıldız','pending'],[1,20,'Kaan Tunç','approved'],
-    [2,11,'Deniz Kaya','approved'],[2,18,'Hakan Koç','approved'],[2,19,'Levent Mor','approved'],[2,21,'Ceyda Nur','approved'],
-    [3,10,'Ela Tan','approved'],[3,18,'Hakan Koç','approved'],[3,20,'Mehmet Barış','approved'],
-    [4,11,'Rüya Yıldız','approved'],[4,13,'Levent Mor','approved'],[4,18,'Deniz Kaya','approved'],[4,19,'Naz Ak','approved'],
-    [5,10,'Deniz Kaya','approved'],[5,12,'Levent Mor','approved'],
-  ];
-  let rid=1; const requests=plan.map(p=>{ const s=byName(p[2]);
-    return {id:'r'+(rid++),trainerId:'t1',studentId:s.id,studentName:s.name,initials:s.initials,dateISO:iso(addDays(monday,p[0])),hour:p[1],status:p[3]}; });
-  const extra=[
-    ['t2',0,9,'Ceyda Nur'],['t2',1,10,'Ela Tan'],['t2',2,17,'Derya Şen'],['t2',3,18,'Buse Er'],['t2',4,9,'Kaan Tunç'],['t2',4,19,'Halil Uz'],
-    ['t3',0,10,'Mehmet Barış'],['t3',2,11,'Deniz Kaya'],['t3',4,12,'Mehmet Barış'],
-    ['t4',1,17,'Hakan Koç'],['t4',3,18,'Naz Ak'],
-    ['t0',0,10,'Selin Ateş'],['t0',2,18,'Gizem Ak'],['t0',4,11,'Selin Ateş'],
-  ];
-  extra.forEach(e=>{ const s=byName(e[3]);
-    requests.push({id:'r'+(rid++),trainerId:e[0],studentId:s.id,studentName:s.name,initials:s.initials,dateISO:iso(addDays(monday,e[1])),hour:e[2],status:'approved'}); });
-  // geçmiş dersler — öğrencinin alışkanlığı (akıllı öneri bunlardan öğrenir)
-  const gecmis=[
-    ['s1','t1',-7,19],['s1','t1',-14,19],['s1','t1',-21,19],['s1','t1',-28,19],  // Zeynep: Salı 19:00
-    ['s1','t2',-10,10],['s1','t1',-35,20],
-    ['p0','t1',-6,18],['p0','t1',-13,18],['p0','t1',-20,18],
-    ['p6','t1',-5,20],['p6','t1',-12,20],
-  ];
-  gecmis.forEach(g=>{ const s=roster.find(x=>x.id===g[0]); if(!s) return;
-    const d=addDays(monday,g[2]+1); // pazartesi+1 = salı
-    requests.push({id:'r'+(rid++),trainerId:g[1],studentId:s.id,studentName:s.name,initials:s.initials,dateISO:iso(d),hour:g[3],status:'approved'}); });
-  requests.forEach(r=>{ const s=roster.find(x=>x.id===r.studentId); r.fee=(s&&s.pkg.lessons)?Math.round(s.pkg.price/s.pkg.lessons):0; });
-  const rates={}; trs.forEach(t=>rates[t.id]=50); rates.t0=100; rates.t1=55; rates.t2=45;
-  trs.forEach((t,i)=>{ t.phone='0532 100 00 '+pad(i); t.pass='1234'; t.mustChange=!(t.owner||t.id==='t1'); });
-  roster.forEach((s,i)=>{ s.phone='0533 200 00 '+pad(i); s.pass='1234'; s.mustChange=(s.id!=='s1'); });
-  // gerçek hesaplar + hızlı test için kısa giriş kodu (kod girilirse şifre de aynı koddur)
-  const own=trs.find(t=>t.id==='t0'); own.phone='0530 649 21 03'; own.pass='Aura2026'; own.mustChange=false; own.code='123456';
-  const brk=trs.find(t=>t.id==='t1'); brk.phone='0530 378 98 84'; brk.pass='Haktan2026'; brk.mustChange=false; brk.code='12345';
-  const zk=roster.find(r=>r.id==='s1'); zk.phone='1234'; zk.pass='1234'; zk.mustChange=false; zk.code='1234';
-  // öğrenci bazlı pay oranı: varsayılan hocanın oranı, bazılarında özel
-  roster.forEach(s=>{ s.trainerRates={}; s.trainers.forEach(id=>{ s.trainerRates[id]=rates[id]; }); });
-  zk.trainerRates.t1=60; const et=roster.find(r=>r.id==='p1'); if(et) et.trainerRates.t1=40;
-  const hk=roster.find(r=>r.id==='p6'); if(hk) hk.trainerRates.t1=65;
-  requests.forEach(r=>{ const s=roster.find(x=>x.id===r.studentId); r.rate=(s&&s.trainerRates&&s.trainerRates[r.trainerId]!==undefined)?s.trainerRates[r.trainerId]:(rates[r.trainerId]||50); });
-  const log=[
-    {dateISO:iso(addDays(now,-2)),trainer:trs[1].name.split(' ')[0]+' H.',kind:'done',delta:-1},
-    {dateISO:iso(addDays(now,-6)),trainer:trs[2].name.split(' ')[0]+' H.',kind:'done',delta:-1},
-    {dateISO:iso(addDays(now,-9)),trainer:trs[1].name.split(' ')[0]+' H.',kind:'refund',delta:1},
-    {dateISO:iso(addDays(now,-11)),trainer:trs[2].name.split(' ')[0]+' H.',kind:'burn',delta:-1},
-  ];
-  const notifs=[
-    {icon:'check',t:'Dersin onaylandı',d:`${trs[1].name} · Salı 10:00`,when:'2s önce'},
-    {icon:'clock',t:'Talebin alındı',d:`${trs[2].name} · onay bekliyor`,when:'dün'},
-  ];
-  return {v:17, role:'student', meId:'s1', screen:{student:'home',trainer:'agenda',admin:'reports'},
+  const roster=BASE_ROSTER.map(r=>{ const p=r.pkg;
+    return {...r, trainers:[...r.trainers], trainerRates:{...r.trainerRates},
+      pkg:{lessons:p.lessons,months:p.months,used:p.used,price:p.price,type:p.type,
+           startISO:iso(addDays(now,p.so)),endISO:iso(addDays(now,p.eo))}}; });
+  // müsaitlik: hafta içi 10-13 ve 17-21, cumartesi 10-13 — yönetici düzenler
+  const rng=(a,b)=>{const o=[];for(let h=a;h<b;h++)o.push(h);return o;};
+  const availability={};
+  trs.forEach(t=>{ const w={}; [1,2,3,4,5].forEach(g=>{ w[g]=[...rng(10,13),...rng(17,21)]; }); w[6]=rng(10,13); availability[t.id]=w; });
+  const rates={}; trs.forEach(t=>{ rates[t.id]=50; });
+  // demo dersler: takvim ve rapor boş görünmesin
+  const requests=[]; let rid=1;
+  roster.forEach((s,i)=>{ s.trainers.forEach((T,ti)=>{ const w=availability[T];
+    [-31,-24,-17,-10,-3,4].forEach((off,k)=>{ if((i+k+ti)%2) return;
+      const d=addDays(now,off+((i+k)%5)), g=d.getDay(); const saatler=w[g]||[]; if(!saatler.length) return;
+      const saat=saatler[(i+ti)%saatler.length];
+      if(requests.some(r=>r.trainerId===T&&r.dateISO===iso(d)&&r.hour===saat)) return;
+      requests.push({id:'r'+(rid++),trainerId:T,studentId:s.id,studentName:s.name,initials:s.initials,
+        dateISO:iso(d),hour:saat,status:'approved',fee:Math.round(s.pkg.price/s.pkg.lessons),rate:50}); }); }); });
+  const ilk=roster[0].id;
+  return {v:18, role:'student', meId:ilk, screen:{student:'home',trainer:'agenda',admin:'reports'},
     agendaView:'day', dayOffset:(now.getDay()===0?6:now.getDay()-1), trWeek:0, bookWeek:0, repMonth:0, monthOff:0, availDay:1, avWeek:0,
     bookTrainer:'t1', bookDayOffset:(now.getDay()===0?6:now.getDay()-1), bookHour:null,
-    def:{memberId:'s1',trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', memberFilter:'all', addSlot:null, addSearch:'', trStudentSearch:'', trStudent:null, fx:null, tr:null, fxWeek:0, trWeekOff:0, adminMode:'agenda', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
+    def:{memberId:ilk,trainers:['t1'],lessons:12,months:3,price:14400}, memberSearch:'', memberFilter:'all', addSlot:null, addSearch:'', trStudentSearch:'', trStudent:null, fx:null, tr:null, fxWeek:0, trWeekOff:0, adminMode:'agenda', adminMember:null, adminTrainer:'t1', adminAvail:false, lessonSheet:null, moveLessonId:null, availOverrides:{}, avMode:'recurring', trPick:false, trPickSearch:'',
     formSheet:null, nt:{name:'',phone:'',pass:'1234',rate:50}, ns:{name:'',phone:'',pass:'1234',trainers:[],rates:{},lessons:8,months:2,price:9600,trial:null}, outbox:[],
     session:null, authForm:{phone:'',pass:'',err:''}, npForm:{p1:'',p2:'',err:''}, ownerView:'admin',
-    roster, requests, availability, rates, trainers:trs, log, notifs, mondayISO:iso(monday)};
+    roster, requests, availability, rates, trainers:trs, log:[], notifs:[], mondayISO:iso(monday)};
 }
 let S;
-function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==17) S=seed(); }catch(e){ S=seed(); }
+function load(){ try{ const r=localStorage.getItem(KEY); S=r?JSON.parse(r):seed(); if(S.v!==18) S=seed(); }catch(e){ S=seed(); }
   if(!S.trainers||!S.trainers.length) S.trainers=BASE_TRAINERS.map(t=>({...t}));
   TRAINERS=S.trainers; }
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
@@ -542,6 +467,8 @@ function sessionUser(){ const s=S.session; if(!s) return null;
   return rec?{kind:s.kind,id:s.id,rec}:null; }
 function doLogin(){ const f=S.authForm; const u=findUser(f.phone);
   if(!u){ f.err='Bu telefon numarası kayıtlı değil'; save(); render(); return; }
+  // ilk aşama: yalnızca salon sahibi ve hocalar giriyor, öğrenci hesapları henüz açık değil
+  if(u.kind==='student'&&!u.rec.pass){ f.err='Üye girişi henüz açık değil · şimdilik salon sahibi ve hocalar kullanıyor'; save(); render(); return; }
   const raw=String(f.phone||'').trim(), gir=String(f.pass||'');
   const kodlaGiris=u.rec.code&&raw===u.rec.code;              // kısa test kodu: şifre de kodun kendisi
   if(gir!==String(u.rec.pass||'') && !(kodlaGiris&&gir===u.rec.code)){ f.err='Şifre hatalı'; save(); render(); return; }
@@ -1606,10 +1533,10 @@ function renderMemberDetail(id){
   return `<div class="appbar"><div><button class="backbtn" onclick="closeMember()">${ic('chevronL',18)} Üyeler</button><div class="h1" style="margin-top:8px">${s.name}</div></div><div class="mono-av ${e?'stop':''}" style="width:44px;height:44px;border-radius:13px;font-size:15px">${s.initials}</div></div>
   <div class="stat2"><div class="stat"><div class="n" style="color:${e?'var(--stop)':'var(--accent)'}">${p.lessons-p.used}</div><div class="l">Kalan ders</div></div>
     <div class="stat"><div class="n">${daysLeft(p.endISO)}<span class="u"> gün</span></div><div class="l">Süre kaldı</div></div></div>
-  <div class="row"><div class="ic">${ic('ticket',18)}</div><div class="grow"><div class="t mono">${p.lessons} ders · ${p.months} ay</div><div class="d">${fmtShort(p.startISO)} – ${fmtShort(p.endISO)} · ${p.used}/${p.lessons} kullanıldı</div></div><span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span></div>
+  <div class="row"><div class="ic">${ic('ticket',18)}</div><div class="grow"><div class="t mono">${p.lessons} ders · ${p.months} ay${p.type?` · ${p.type}`:''}</div><div class="d">${fmtShort(p.startISO)} – ${fmtShort(p.endISO)} · ${p.used}/${p.lessons} kullanıldı</div></div><span class="tag ${e?'stop':'ok'}">${e?'Bitti':'Aktif'}</span></div>
   <div class="row"><div class="ic acc">${ic('chart',18)}</div><div class="grow"><div class="t mono">${tl(p.price||0)}</div><div class="d">Ders başı ${tl(perLesson(p))} · hoca hakedişi bu tutardan hesaplanır</div></div></div>
   ${phoneRow(s.phone,'Dokun · ara'+(s.mustChange?' · ilk giriş bekleniyor':''))}
-  <button class="btn ghost sm" onclick="resetPass('${s.id}')">${ic('lock',16)} Şifre sıfırla</button>
+  ${s.pass?`<button class="btn ghost sm" onclick="resetPass('${s.id}')">${ic('lock',16)} Şifre sıfırla</button>`:''}
   <div class="sect">Hocaları · pay oranı</div>
   ${s.trainers.map(tid=>`<div class="row"><div class="mono-av" style="width:34px;height:34px;border-radius:11px;font-size:12px">${trainer(tid).initials}</div><div class="grow"><div class="t">${trainer(tid).name}</div><div class="d">Bu öğrenciden alıyor</div></div><span class="tag ${(s.trainerRates||{})[tid]!==undefined&&s.trainerRates[tid]!==rateOf(tid)?'wait':'mut'}">%${rateFor(s,tid)}</span></div>`).join('')}
   <div class="sect">Ders programı</div>
